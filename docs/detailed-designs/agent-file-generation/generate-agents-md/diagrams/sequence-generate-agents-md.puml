@@ -27,7 +27,6 @@ box "Backend - Primer Application" #ECFDF3
   participant "UntrustedContentFence" as fence
   participant "GroundingValidator" as grounding
   participant "LineBudget" as budget
-  participant "ManagedRegion" as region
 end box
 box "Backend - Infrastructure" #FFF4E5
   participant "AtomicFileWriter" as writer
@@ -43,7 +42,7 @@ loop For each prescribed section
   composer -> composer : Skip the section when L2-013 finds no content
   opt The section carries repository-derived text
     composer -> fence : Fence and escape the text
-    fence --> composer : L2-048 labelled block with delimiters escaped
+    fence --> composer : L2-048 labelled block, quoted as data
   end
 end
 composer --> generator : Draft document
@@ -59,9 +58,7 @@ alt The draft exceeds 150 lines
 end
 budget --> generator : L2-014 draft at or below the ceiling
 
-generator -> region : Wrap with version and input hash
-region --> generator : L2-018 single managed region
-generator --> handler : GeneratedFile per target
+generator --> handler : L2-018 GeneratedFile per target, plain Markdown
 
 opt --recursive was supplied
   generator -> generator : Plan one L2-017 nested file per project directory

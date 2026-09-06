@@ -55,7 +55,7 @@ public sealed class CommandSurfaceTests
         Assert.Equal((int)ExitCode.Success, result.ExitCode);
         Assert.Contains("--agent", result.StandardOutput, StringComparison.Ordinal);
         Assert.Contains("--recursive", result.StandardOutput, StringComparison.Ordinal);
-        Assert.Contains("--force", result.StandardOutput, StringComparison.Ordinal);
+        Assert.Contains("--prompt", result.StandardOutput, StringComparison.Ordinal);
     }
 
     // Given the mcp command's help, when it is run, then its subcommands are listed.

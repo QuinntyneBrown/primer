@@ -27,7 +27,6 @@ box "Backend - Primer Application" #ECFDF3
   participant "KeywordPromptClassifier" as classifier
   participant "GreenfieldGenerator" as generator
   participant "UntrustedContentFence" as fence
-  participant "ManagedRegion" as region
 end box
 box "Backend - Infrastructure" #FFF4E5
   participant "AtomicFileWriter" as writer
@@ -63,11 +62,9 @@ end
 init -> generator : Generate for the chosen archetype
 generator -> generator : Locate the archetype template
 generator -> fence : Quote the description
-fence --> generator : L2-068 labelled block with delimiters escaped
+fence --> generator : L2-068 labelled block, quoted as data
 generator -> generator : L2-068 hold the body within the 150-line ceiling
-generator -> region : Wrap with version and input hash
-region --> generator : L2-068 single managed region
-generator --> init : GeneratedFile
+generator --> init : GeneratedFile, plain Markdown
 
 init -> writer : Write AGENTS.md and the pointer files
 writer -> tree : Emit content

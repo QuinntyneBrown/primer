@@ -22,11 +22,6 @@ internal sealed class InitCommand : ICommandModule
         Description = "Also write nested guidance for each independent project.",
     };
 
-    internal static Option<bool> Force { get; } = new("--force")
-    {
-        Description = "Overwrite a file primer did not generate, after backing it up.",
-    };
-
     internal static Option<string> Prompt { get; } = new("--prompt")
     {
         Description = "Describe a project that does not exist yet, instead of analysing this one.",
@@ -48,7 +43,6 @@ internal sealed class InitCommand : ICommandModule
         {
             Agent,
             Recursive,
-            Force,
             Prompt,
             PromptFile,
             Archetype,
@@ -85,8 +79,7 @@ internal sealed class InitCommand : ICommandModule
             .Concat(selection.Targets.Select(PointerFileGenerator.Generate).OfType<GeneratedFile>())
             .ToList();
 
-        var plan = services.GetRequiredService<OverwritePolicy>()
-            .Plan(files, parseResult.GetValue(Force));
+        var plan = services.GetRequiredService<OverwritePolicy>().Plan(files);
 
         if (globals.DryRun)
         {

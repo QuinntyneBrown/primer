@@ -23,12 +23,10 @@ box "Backend - Primer CLI host" #D1FADF
 end box
 box "Backend - Primer Application" #ECFDF3
   participant "OverwritePolicy" as policy
-  participant "ManagedRegionMerger" as merger
   participant "DryRunReporter" as dryrun
 end box
 box "Backend - Infrastructure" #FFF4E5
   participant "AtomicFileWriter" as writer
-  participant "BackupWriter" as backup
   database "Working tree" as tree
 end box
 
@@ -40,17 +38,12 @@ loop For each target
   tree --> handler : Current content or absence
   handler -> policy : Decide the action
 
-  alt The file carries a managed region
-    policy -> merger : Replace the delimited block
-    merger --> policy : L2-024 surround preserved byte-for-byte
-  else The file is absent
+  alt The file is absent
     policy --> handler : Create
-  else Content is unchanged
+  else Content already matches
     policy --> handler : L2-025 Unchanged, the file is not opened for writing
-  else The file has no region and --force was not passed
-    policy --> handler : Refuse with ExitCode.Configuration
-  else The region is malformed
-    policy --> handler : MalformedRegionError, ExitCode.Configuration
+  else Content differs
+    policy --> handler : L2-024 Update, the target is replaced in full
   end
 end
 
@@ -58,12 +51,6 @@ alt --dry-run was supplied
   handler -> dryrun : Report the plan
   dryrun --> shell : L2-023 intended content or unified diff, nothing written
 else The run applies changes
-  opt A forced overwrite is planned
-    handler -> backup : Copy the prior content
-    backup -> tree : Write the timestamped backup
-    tree --> backup : Backup path
-    backup --> handler : Reported backup path
-  end
   handler -> writer : Apply the plan
   writer -> writer : Apply L2-026 encoding, line ending, and trailing newline
   writer -> tree : Write through a temporary file, then replace

@@ -31,12 +31,8 @@ enum FileAction {
 }
 
 class OverwritePolicy {
-  +Decide(existing: string, generated: GeneratedFile, force: bool): FileAction
-}
-
-class ManagedRegionMerger {
-  +Merge(existing: string, body: string): string
-  -Validate(existing: string): void
+  +Plan(generated: IReadOnlyList<GeneratedFile>): WritePlan
+  -Decide(generated: GeneratedFile, lineEnding: string): GeneratedFile
 }
 
 interface IDryRunReporter {
@@ -55,10 +51,6 @@ class AtomicFileWriter {
   -WriteThroughTemporary(path: string, content: string): void
 }
 
-class BackupWriter {
-  +Backup(path: string): string
-}
-
 class LineEndingPolicy {
   +Resolve(root: RepositoryRoot): string
 }
@@ -72,20 +64,13 @@ class FilePermissions {
   +Apply(path: string): void
 }
 
-class MalformedRegionError {
-  +Path: string
-}
-
 IDryRunReporter <|.. DryRunReporter
 IFileWriter <|.. AtomicFileWriter
 WritePlan o-- "*" GeneratedFile : holds
 GeneratedFile --> FileAction : declares
 OverwritePolicy ..> WritePlan : sets actions on
-OverwritePolicy --> ManagedRegionMerger : merges through
-ManagedRegionMerger ..> MalformedRegionError : raises
 DryRunReporter ..> WritePlan : renders
 AtomicFileWriter ..> WritePlan : applies
-AtomicFileWriter --> BackupWriter : backs up through
 AtomicFileWriter --> LineEndingPolicy : applies
 AtomicFileWriter --> EncodingPolicy : applies
 AtomicFileWriter --> FilePermissions : applies

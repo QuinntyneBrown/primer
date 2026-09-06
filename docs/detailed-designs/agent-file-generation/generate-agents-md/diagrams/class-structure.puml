@@ -52,19 +52,11 @@ class GroundingValidator {
 
 class UntrustedContentFence {
   +Fence(text: string): string
-  -EscapeDelimiters(text: string): string
 }
 
 class LineBudget {
   +MaxLines: int = 150
   +Apply(draft: string): string
-}
-
-class ManagedRegion {
-  +{static} Begin: string = "<!-- primer:begin -->"
-  +{static} End: string = "<!-- primer:end -->"
-  +Wrap(body: string, version: string, hash: string): string
-  +{static} TryParse(content: string, out region: ManagedRegion): bool
 }
 
 class ContentHash {
@@ -99,11 +91,10 @@ ISection <|.. BoundariesSection
 AgentsFileGenerator --> SectionComposer : composes with
 AgentsFileGenerator ..> GroundingValidator : validates with
 AgentsFileGenerator ..> LineBudget : trims with
-AgentsFileGenerator ..> ManagedRegion : wraps with
+AgentsFileGenerator ..> ContentHash : hashes inputs with
 AgentsFileGenerator ..> NestedProjectPlanner : plans with
 AgentsFileGenerator --> GeneratedFile : produces
 SectionComposer o-- "*" ISection : orders
 ISection ..> UntrustedContentFence : fences through
-ManagedRegion ..> ContentHash : records
 GeneratedFile --> FileAction : declares
 @enduml

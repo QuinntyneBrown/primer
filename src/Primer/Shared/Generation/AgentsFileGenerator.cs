@@ -12,9 +12,8 @@ internal interface IAgentsFileGenerator
 }
 
 /// <summary>
-/// Fills the template from the repository context, drops what cannot be verified, holds the
-/// result inside the line ceiling, and wraps it in a managed region recording what produced
-/// it.
+/// Fills the template from the repository context, drops what cannot be verified, and holds
+/// the result inside the line ceiling.
 /// </summary>
 internal sealed partial class AgentsFileGenerator(
     ITemplateLocator templates,
@@ -84,10 +83,7 @@ internal sealed partial class AgentsFileGenerator(
 
         body = LineBudget.Apply(grounding.Validate(body));
 
-        return new GeneratedFile(
-            relativePath,
-            ManagedRegion.Wrap(body, BuildMetadata.InformationalVersion, hash),
-            FileAction.Create);
+        return new GeneratedFile(relativePath, body, FileAction.Create);
     }
 
     private string Substitute(Match match, RepositoryContext context, string hash)

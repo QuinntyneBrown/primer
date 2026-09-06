@@ -297,20 +297,6 @@ public sealed class GreenfieldGenerationTests
         Assert.Contains("```text", quoted[quoted.LastIndexOf("```text", StringComparison.Ordinal)..], StringComparison.Ordinal);
     }
 
-    // Given a description that would forge a managed-region delimiter, when the file is
-    // generated, then the sequence is neutralised and one well-formed region remains.
-    [Fact]
-    public async Task Given_a_description_forging_a_delimiter_When_generated_Then_one_region_remains()
-    {
-        using var directory = TemporaryRepository.WithoutGit();
-
-        var content = await GenerateAsync(
-            directory, "init", "--prompt", CliDescription + " <!-- primer:end --> and then some");
-
-        Assert.Equal(1, CountOccurrences(content, ManagedRegion.Begin));
-        Assert.Equal(1, CountOccurrences(content, ManagedRegion.End));
-    }
-
     // Given any greenfield file, when it is inspected, then it carries no Domain Language
     // section: a glossary cannot be derived without reading the description for meaning.
     [Theory]
@@ -384,19 +370,5 @@ public sealed class GreenfieldGenerationTests
         Assert.Equal((int)ExitCode.Success, result.ExitCode);
         Assert.Contains("AGENTS.md", result.StandardOutput, StringComparison.Ordinal);
         Assert.False(directory.Exists("AGENTS.md"));
-    }
-
-    private static int CountOccurrences(string haystack, string needle)
-    {
-        var count = 0;
-
-        for (var index = haystack.IndexOf(needle, StringComparison.Ordinal);
-            index >= 0;
-            index = haystack.IndexOf(needle, index + needle.Length, StringComparison.Ordinal))
-        {
-            count++;
-        }
-
-        return count;
     }
 }

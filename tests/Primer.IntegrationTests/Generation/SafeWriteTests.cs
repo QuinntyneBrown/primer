@@ -1,8 +1,8 @@
 // Acceptance Test
 // Traces to: L2-023, L2-024, L2-025, L2-026, L2-051, L2-057
 // Description: Verify a run can be previewed before it happens, that repeating it changes
-//              nothing, that human-authored content outside the managed region survives,
-//              and that a failed write leaves the original file intact.
+//              nothing, that an existing file is replaced by generated content, and that
+//              a failed write leaves the original file intact.
 
 using System.Text;
 using Primer.IntegrationTests.TestSupport;
@@ -21,8 +21,8 @@ public sealed class SafeWriteTests
     private static AtomicFileWriter Writer(TemporaryRepository repository) =>
         new(new RepositoryLocation(repository.Path), new LineEndingPolicy(new RepositoryLocation(repository.Path)));
 
-    private static GeneratedFile Managed(string relativePath, string body) =>
-        new(relativePath, ManagedRegion.Wrap(body, "0.1.0", "hash-1"), FileAction.Create);
+    private static GeneratedFile Generated(string relativePath, string body) =>
+        new(relativePath, body, FileAction.Create);
 
     // Given a repository with no generated files, when a dry run is planned, then the
     // intended content of every file is reported, and no file is created on disk.
@@ -35,7 +35,7 @@ public sealed class SafeWriteTests
         var console = new PrimerConsole(output, error, Capabilities, OutputFormat.Text, VerbosityLevel.Normal);
 
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", "# Overview")], force: false);
+            .Plan([Generated("AGENTS.md", "# Overview")]);
 
         new DryRunReporter(console).Report(plan);
 
@@ -50,7 +50,7 @@ public sealed class SafeWriteTests
     {
         using var repository = new TemporaryRepository();
         var wide = "# " + new string('x', 200);
-        repository.Write("AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+        repository.Write("AGENTS.md", "# Old\n");
 
         using var output = new StringWriter();
         using var error = new StringWriter();
@@ -58,7 +58,7 @@ public sealed class SafeWriteTests
         var console = new PrimerConsole(output, error, narrow, OutputFormat.Text, VerbosityLevel.Normal);
 
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", wide)], force: false);
+            .Plan([Generated("AGENTS.md", wide)]);
 
         new DryRunReporter(console).Report(plan);
 
@@ -71,7 +71,7 @@ public sealed class SafeWriteTests
     public void Given_a_dry_run_for_an_existing_file_When_reported_Then_a_diff_is_shown_and_nothing_changes()
     {
         using var repository = new TemporaryRepository();
-        repository.Write("AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+        repository.Write("AGENTS.md", "# Old\n");
         var before = repository.Read("AGENTS.md");
 
         using var output = new StringWriter();
@@ -79,7 +79,7 @@ public sealed class SafeWriteTests
         var console = new PrimerConsole(output, error, Capabilities, OutputFormat.Text, VerbosityLevel.Normal);
 
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", "# New")], force: false);
+            .Plan([Generated("AGENTS.md", "# New")]);
 
         new DryRunReporter(console).Report(plan);
 
@@ -96,92 +96,36 @@ public sealed class SafeWriteTests
     {
         using var repository = new TemporaryRepository();
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
-        var generated = Managed("AGENTS.md", "# Overview");
+        var generated = Generated("AGENTS.md", "# Overview");
 
         // Write through the writer, so the file on disk is what a real run would leave.
-        Writer(repository).Apply(policy.Plan([generated], force: false));
+        Writer(repository).Apply(policy.Plan([generated]));
 
-        var plan = policy.Plan([generated], force: false);
+        var plan = policy.Plan([generated]);
 
         Assert.Equal(FileAction.Unchanged, Assert.Single(plan.Entries).Action);
         Assert.False(plan.HasChanges);
     }
 
-    // Given an existing AGENTS.md containing human-authored text before and after the
-    // managed region, when it is written, then only the content between the delimiters is
-    // replaced and the surrounding text is byte-identical to its prior content.
+    // Given an existing AGENTS.md a person has written or edited by hand, when a run is
+    // planned and applied, then it is reported as an update and the file is replaced in
+    // full by generated content.
     [Fact]
-    public void Given_text_around_the_managed_region_When_regenerated_Then_the_surround_is_byte_identical()
-    {
-        using var repository = new TemporaryRepository();
-        const string Before = "# Hand written intro\n\nSomething a person wrote.\n\n";
-        const string After = "\n\n## Team notes\n\nAlso hand written.\n";
-        repository.Write("AGENTS.md", Before + ManagedRegion.Wrap("# Old", "0.1.0", "hash-0") + After);
-
-        var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", "# New")], force: false);
-        Writer(repository).Apply(plan);
-
-        var updated = repository.Read("AGENTS.md");
-        Assert.StartsWith(Before, updated, StringComparison.Ordinal);
-        Assert.EndsWith(After.TrimEnd('\n') + "\n", updated, StringComparison.Ordinal);
-        Assert.Contains("# New", updated, StringComparison.Ordinal);
-        Assert.DoesNotContain("# Old", updated, StringComparison.Ordinal);
-    }
-
-    // Given an existing AGENTS.md with no managed-region delimiters, when a run is planned
-    // without --force, then the file is not modified and the outcome is exit 3.
-    [Fact]
-    public void Given_an_unmanaged_file_When_planned_without_force_Then_it_is_refused_with_exit_three()
+    public void Given_a_hand_edited_file_When_applied_Then_it_is_replaced_by_generated_content()
     {
         using var repository = new TemporaryRepository();
         repository.Write("AGENTS.md", "# Entirely hand written\n");
 
-        var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
-
-        var failure = Assert.Throws<UnmanagedFileException>(
-            () => policy.Plan([Managed("AGENTS.md", "# New")], force: false));
-
-        Assert.Equal(ExitCode.Configuration, failure.ExitCode);
-        Assert.Equal("# Entirely hand written\n", repository.Read("AGENTS.md"));
-    }
-
-    // Given an existing AGENTS.md with no managed-region delimiters, when a run is forced,
-    // then the file is overwritten and a backup of the prior content is written alongside.
-    [Fact]
-    public void Given_an_unmanaged_file_When_forced_Then_it_is_overwritten_after_a_backup_is_written()
-    {
-        using var repository = new TemporaryRepository();
-        const string Original = "# Entirely hand written\n";
-        repository.Write("AGENTS.md", Original);
-
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", "# New")], force: true);
+            .Plan([Generated("AGENTS.md", "# New")]);
 
-        var backups = new BackupWriter(new RepositoryLocation(repository.Path));
-        var backupPath = backups.Backup("AGENTS.md");
+        Assert.Equal(FileAction.Update, Assert.Single(plan.Entries).Action);
+
         Writer(repository).Apply(plan);
 
-        Assert.Contains("# New", repository.Read("AGENTS.md"), StringComparison.Ordinal);
-        Assert.Equal(Original, File.ReadAllText(backupPath));
-    }
-
-    // Given an existing AGENTS.md with a begin delimiter but no end delimiter, when a run
-    // is planned, then the file is not modified and the outcome is exit 3.
-    [Fact]
-    public void Given_a_malformed_region_When_planned_Then_it_is_refused_with_exit_three()
-    {
-        using var repository = new TemporaryRepository();
-        const string Malformed = "intro\n" + ManagedRegion.Begin + "\n# body\nno end marker\n";
-        repository.Write("AGENTS.md", Malformed);
-
-        var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
-
-        var failure = Assert.Throws<MalformedRegionException>(
-            () => policy.Plan([Managed("AGENTS.md", "# New")], force: false));
-
-        Assert.Equal(ExitCode.Configuration, failure.ExitCode);
-        Assert.Equal(Malformed, repository.Read("AGENTS.md"));
+        var updated = repository.Read("AGENTS.md");
+        Assert.Equal("# New\n", updated);
+        Assert.DoesNotContain("hand written", updated, StringComparison.Ordinal);
     }
 
     // Given an unchanged repository, when a run is applied twice in succession,
@@ -193,11 +137,11 @@ public sealed class SafeWriteTests
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
         var writer = Writer(repository);
 
-        writer.Apply(policy.Plan([Managed("AGENTS.md", "# Overview")], force: false));
+        writer.Apply(policy.Plan([Generated("AGENTS.md", "# Overview")]));
         var first = repository.Read("AGENTS.md");
         var firstWrite = File.GetLastWriteTimeUtc(Path.Combine(repository.Path, "AGENTS.md"));
 
-        var secondPlan = policy.Plan([Managed("AGENTS.md", "# Overview")], force: false);
+        var secondPlan = policy.Plan([Generated("AGENTS.md", "# Overview")]);
         writer.Apply(secondPlan);
 
         Assert.Equal(first, repository.Read("AGENTS.md"));
@@ -234,25 +178,6 @@ public sealed class SafeWriteTests
                 .ToDictionary(path => path, File.GetLastWriteTimeUtc, StringComparer.Ordinal));
     }
 
-    // Given a repository whose generated files exist, when a run is repeated,
-    // then exactly one managed-region delimiter pair remains.
-    [Fact]
-    public void Given_repeated_runs_When_applied_Then_exactly_one_delimiter_pair_remains()
-    {
-        using var repository = new TemporaryRepository();
-        var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
-        var writer = Writer(repository);
-
-        for (var run = 0; run < 3; run++)
-        {
-            writer.Apply(policy.Plan([Managed("AGENTS.md", $"# Overview {run}")], force: false));
-        }
-
-        var content = repository.Read("AGENTS.md");
-        Assert.Equal(1, CountOccurrences(content, ManagedRegion.Begin));
-        Assert.Equal(1, CountOccurrences(content, ManagedRegion.End));
-    }
-
     // Given any generated file, when its bytes are inspected,
     // then the encoding is UTF-8 without a byte-order mark.
     [Fact]
@@ -261,7 +186,7 @@ public sealed class SafeWriteTests
         using var repository = new TemporaryRepository();
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
 
-        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# Prüfung")], force: false));
+        Writer(repository).Apply(policy.Plan([Generated("AGENTS.md", "# Prüfung")]));
 
         var bytes = File.ReadAllBytes(Path.Combine(repository.Path, "AGENTS.md"));
         Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
@@ -276,7 +201,7 @@ public sealed class SafeWriteTests
         using var repository = new TemporaryRepository();
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
 
-        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# Overview")], force: false));
+        Writer(repository).Apply(policy.Plan([Generated("AGENTS.md", "# Overview")]));
 
         var content = repository.Read("AGENTS.md");
         Assert.EndsWith("\n", content, StringComparison.Ordinal);
@@ -297,7 +222,7 @@ public sealed class SafeWriteTests
         repository.Write(".gitattributes", declaration + "\n");
 
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
-        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# One\n# Two")], force: false));
+        Writer(repository).Apply(policy.Plan([Generated("AGENTS.md", "# One\n# Two")]));
 
         var content = repository.Read("AGENTS.md");
         Assert.Contains("# One" + expected, content, StringComparison.Ordinal);
@@ -310,7 +235,7 @@ public sealed class SafeWriteTests
         using var repository = new TemporaryRepository();
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
 
-        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# One\n# Two")], force: false));
+        Writer(repository).Apply(policy.Plan([Generated("AGENTS.md", "# One\n# Two")]));
 
         Assert.DoesNotContain('\r', repository.Read("AGENTS.md"));
     }
@@ -324,12 +249,12 @@ public sealed class SafeWriteTests
 
         // The target sits in its own directory so the lock can be applied there without
         // stopping the fixture from cleaning itself up.
-        var target = repository.Write("locked/AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+        var target = repository.Write("locked/AGENTS.md", "# Old\n");
         var directory = Path.GetDirectoryName(target)!;
         var before = File.ReadAllText(target);
 
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("locked/AGENTS.md", "# New")], force: false);
+            .Plan([Generated("locked/AGENTS.md", "# New")]);
 
         // Making a target unwritable is platform-specific. On Windows a read-only file
         // cannot be replaced. On Unix, replacing a file is a rename, which needs write
@@ -391,24 +316,10 @@ public sealed class SafeWriteTests
         using var repository = new TemporaryRepository();
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
 
-        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# Overview")], force: false));
+        Writer(repository).Apply(policy.Plan([Generated("AGENTS.md", "# Overview")]));
 
         var mode = File.GetUnixFileMode(Path.Combine(repository.Path, "AGENTS.md"));
         Assert.Equal(UnixFileMode.None, mode & (UnixFileMode.GroupWrite | UnixFileMode.OtherWrite));
         Assert.Equal(UnixFileMode.None, mode & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute));
-    }
-
-    private static int CountOccurrences(string haystack, string needle)
-    {
-        var count = 0;
-        var index = 0;
-
-        while ((index = haystack.IndexOf(needle, index, StringComparison.Ordinal)) >= 0)
-        {
-            count++;
-            index += needle.Length;
-        }
-
-        return count;
     }
 }

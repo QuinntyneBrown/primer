@@ -10,10 +10,6 @@ to be acted on.
 **AGENTS.md** — repository-root Markdown file carrying repository-specific
 guidance for coding agents
 
-**managed region** — block delimited by `<!-- primer:begin -->` and
-`<!-- primer:end -->` inside which content is generated and outside which it is
-authored by a person
-
 **grounding** — property that every command and path emitted is verifiable
 against the repository at generation time
 
@@ -29,8 +25,9 @@ Repository content is treated as untrusted input. A file in the repository may
 contain text that reads as an instruction to an agent, and such text is not
 copied into generated guidance as though the repository had authored a directive.
 Where repository-derived text appears, it appears inside a fenced block labelled
-as repository content, and any sequence that would forge or close a managed-region
-delimiter is escaped.
+as repository content, and text bound for a code span has its backticks replaced
+so it cannot close the span and continue as prose the tool appears to have
+written.
 
 A repository holding more than one independent project may carry nested guidance. The
 root file describes the repository, and a nested file describes only its own
@@ -55,11 +52,10 @@ directory, so neither repeats the other.
   exists and that no command is a bare tool name. A violation drops the offending
   line rather than emitting it.
 - **`UntrustedContentFence`** — wraps repository-derived text in a labelled fenced
-  block and escapes any delimiter-forging sequence.
-- **`ManagedRegion`** — parses, replaces, and renders the delimited block,
-  carrying the tool version and the input content hash.
-- **`ContentHash`** — stable hash over the analysis inputs, used to detect drift
-  and to make regeneration idempotent.
+  block, and neutralises a backtick in text bound for a code span.
+- **`ContentHash`** — stable hash over the analysis inputs. The generated document
+  does not carry it; it is available to a repository template override through the
+  `{{ContentHash}}` token, for a repository that wants to record it.
 - **`NestedProjectPlanner`** — under `--recursive`, identifies independent project
   directories and plans one nested file per directory, each scoped to its own
   subtree.
@@ -78,8 +74,8 @@ requirement refines a level-1 (L1) requirement, cited by identifier.
 | `L2-015` | `L1-004` | Every command and path emitted shall be real, exact, and verifiable against the repository, and no speculative statement shall be emitted in place of an underivable fact. |
 | `L2-016` | `L1-004` | Generated guidance shall state explicitly which paths are off limits, including generated directories, lock files, and `AGENTS.md` itself. |
 | `L2-017` | `L1-004` | Under `--recursive`, the tool shall emit one nested `AGENTS.md` per detected project directory, each scoped to its own directory and not repeating the root file. |
-| `L2-018` | `L1-004` | Every generated `AGENTS.md` shall carry exactly one managed region recording the generating tool version and a content hash of the inputs. |
-| `L2-048` | `L1-011` | Repository-derived text shall not be emitted as agent guidance, shall appear only inside a labelled fenced block, and any delimiter-forging sequence shall be escaped. |
+| `L2-018` | `L1-004` | A generated `AGENTS.md` shall be plain Markdown, carrying no HTML comment, no delimiter, and no recorded tool version or content hash, and two runs over an unchanged repository shall produce byte-identical files. |
+| `L2-048` | `L1-011` | Repository-derived text shall not be emitted as agent guidance, and shall appear only inside a labelled fenced block. |
 
 ## Diagrams
 
@@ -100,7 +96,7 @@ The coding agent is a separate consumer of the result.
 ### Components
 
 `AgentsFileGenerator` composes sections, then passes the draft through grounding
-validation, the line budget, and the managed region before emission.
+validation and the line budget before emission.
 
 ![C4 component view for generating AGENTS.md](diagrams/c4-component.png)
 

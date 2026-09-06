@@ -19,6 +19,6 @@ System_Boundary(target, "Target directory") {
 Rel(dev, exe, "Invokes")
 Rel(exe, brief, "Reads the description from", "--prompt-file")
 Rel(exe, archetypes, "Renders the chosen archetype from")
-Rel(exe, agentsmd, "Writes the managed region into")
+Rel(exe, agentsmd, "Writes")
 Rel(agent, agentsmd, "Reads")
 @enduml

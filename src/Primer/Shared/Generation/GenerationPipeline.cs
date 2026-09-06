@@ -109,15 +109,12 @@ internal static class LineBudget
     /// <summary>The ceiling established practice sets for agent guidance.</summary>
     internal const int MaxLines = 150;
 
-    /// <summary>Lines the managed region wrapper occupies.</summary>
-    internal const int ReservedForRegion = 4;
-
     internal static string Apply(string body)
     {
         ArgumentNullException.ThrowIfNull(body);
 
         var lines = body.Split('\n');
-        var ceiling = MaxLines - ReservedForRegion;
+        var ceiling = MaxLines;
 
         if (lines.Length <= ceiling)
         {
@@ -167,17 +164,6 @@ internal static class ContentHash
         }
 
         return Digest(canonical.ToString());
-    }
-
-    /// <summary>
-    /// The fingerprint of a greenfield run. Its inputs are the description and the chosen
-    /// archetype, which is what makes the same description regenerate byte-identically.
-    /// </summary>
-    internal static string Compute(string prompt, Greenfield.SolutionArchetype archetype)
-    {
-        ArgumentNullException.ThrowIfNull(prompt);
-
-        return Digest($"{archetype}|{prompt}");
     }
 
     private static string Digest(string canonical) =>

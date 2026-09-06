@@ -36,7 +36,7 @@ public sealed class DriftCheckTests
             .Concat(AgentSelection.Default().Targets.Select(PointerFileGenerator.Generate).OfType<GeneratedFile>())
             .ToList();
 
-        var plan = services.GetRequiredService<OverwritePolicy>().Plan(generated, force: false);
+        var plan = services.GetRequiredService<OverwritePolicy>().Plan(generated);
         services.GetRequiredService<IFileWriter>().Apply(plan);
     }
 
@@ -88,7 +88,7 @@ public sealed class DriftCheckTests
     {
         using var repository = DotnetRepository();
         Materialise(repository);
-        repository.Write("AGENTS.md", ManagedRegion.Wrap("# Stale", "0.0.1", "old-hash") + "\n");
+        repository.Write("AGENTS.md", "# Stale\n");
 
         var report = Check(repository);
 
@@ -118,7 +118,7 @@ public sealed class DriftCheckTests
     {
         using var repository = DotnetRepository();
         Materialise(repository);
-        repository.Write("AGENTS.md", ManagedRegion.Wrap("# Stale", "0.0.1", "old-hash") + "\n");
+        repository.Write("AGENTS.md", "# Stale\n");
         var before = Snapshot(repository);
 
         Check(repository);
@@ -126,10 +126,10 @@ public sealed class DriftCheckTests
         Assert.Equal(before, Snapshot(repository));
     }
 
-    // Given a repository whose AGENTS.md carries no managed region, when the check runs,
+    // Given a repository whose AGENTS.md was written by hand, when the check runs,
     // then it is reported as divergent rather than failing the run.
     [Fact]
-    public void Given_an_unmanaged_file_When_checked_Then_it_is_reported_divergent()
+    public void Given_a_hand_written_file_When_checked_Then_it_is_reported_divergent()
     {
         using var repository = DotnetRepository();
         repository.Write("AGENTS.md", "# Entirely hand written\n");

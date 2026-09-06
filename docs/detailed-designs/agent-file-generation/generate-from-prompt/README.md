@@ -59,8 +59,8 @@ Greenfield output is a seed. Once code exists, an analysis run supersedes it, an
 - **`ArchetypeTemplates`** — the guidance each archetype prescribes, held as
   template content and resolved by the name `agents.web.md` or `agents.cli.md`.
 - **`IGreenfieldGenerator`** and **`GreenfieldGenerator`** — render the archetype's
-  template, quote the description, hold the result within the line ceiling, and
-  wrap it in a managed region. The generator does not ground the result against the
+  template, quote the description, and hold the result within the line ceiling.
+  The generator does not ground the result against the
   working tree: the folder outline names directories the project is about to
   create, and confirming their absence would delete the outline.
 - **`BuiltInTemplates`** — the built-in content for each template name, supplied by
@@ -69,8 +69,8 @@ Greenfield output is a seed. Once code exists, an analysis run supersedes it, an
   applies to an archetype exactly as it applies to the analysis template.
 - **`InitCommand`** — routes to this path when a description is supplied, and to
   analysis otherwise. Both paths converge on the same overwrite policy, dry-run
-  reporter, and writer, so previewing, forcing, and pointer-file generation behave
-  identically in either mode.
+  reporter, and writer, so previewing and pointer-file generation behave identically
+  in either mode.
 
 `GreenfieldGenerator` derives two values from the target directory. The directory
 name is the project name. A namespace-safe form of that name supplies the
@@ -94,7 +94,7 @@ requirement refines a level-1 (L1) requirement, cited by identifier.
 | `L2-065` | `L1-015` | The web application archetype shall emit the `backend`, `frontend`, `design-system`, and `e2e` outline, Clean Architecture with thin controllers over a pinned MediatR, agreeing folders and namespaces, the Angular library workspace, and the design system as a standalone deliverable. |
 | `L2-066` | `L1-015` | The CLI archetype shall emit `src` and `tests` at the root, and shall state .NET with `System.CommandLine`, packaging as an installable .NET tool, the Microsoft.Extensions patterns, and SOLID. |
 | `L2-067` | `L1-015` | Every archetype shall state that speed is not the goal, that implementation is radically simple, that development is acceptance-test-driven, and that architecture tests shall never be written. |
-| `L2-068` | `L1-015` | The description shall appear quoted as data with delimiters neutralised, no Domain Language section shall be emitted, the same description shall regenerate byte-identically, the file shall stay within 150 lines untruncated, and the pointer files shall be written alongside. |
+| `L2-068` | `L1-015` | The description shall appear quoted as data, no Domain Language section shall be emitted, the same description shall regenerate byte-identically, the file shall stay within 150 lines untruncated, and the pointer files shall be written alongside. |
 
 ## Diagrams
 
