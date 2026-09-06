@@ -137,8 +137,10 @@ No `git init` is needed first. Primer picks a solution archetype from the descri
 and writes that archetype's structure and conventions:
 
 - **web** — `backend/`, `frontend/`, `design-system/`, and `e2e/`, with Clean
-  Architecture, thin controllers over MediatR, an Angular workspace of `api`,
-  `components`, and `domain` libraries, and Playwright page objects.
+  Architecture, thin controllers over MediatR, an Angular multi-project workspace of
+  `api`, `components`, and `domain` libraries beside the application project under
+  `frontend/projects/`, every service reached through an interface and an injection
+  token, and Playwright page objects.
 - **cli** — `src/` and `tests/` at the root, `System.CommandLine`, packaged as a .NET
   tool, with integration tests as the acceptance tests.
 

@@ -201,6 +201,52 @@ public sealed class GreenfieldGenerationTests
         Assert.Matches("^[A-Za-z_][A-Za-z0-9_]*$", match.Groups["ns"].Value);
     }
 
+    // Given a web description, when the file is generated, then the folder outline is
+    // an Angular multi-project workspace: every project sits under
+    // frontend/projects/, and the application project is named for the repository.
+    [Fact]
+    public async Task Given_a_web_description_When_generated_Then_the_frontend_is_a_project_workspace()
+    {
+        using var directory = TemporaryRepository.WithoutGit();
+
+        var content = await GenerateAsync(directory, "init", "--prompt", WebDescription);
+
+        Assert.Contains("frontend/projects/", content, StringComparison.Ordinal);
+
+        var outline = content[content.IndexOf("## Folder Structure", StringComparison.Ordinal)..];
+
+        // The application project carries the repository's own name, beside the three
+        // libraries rather than above them.
+        Assert.Contains($"|-- {new DirectoryInfo(directory.Path).Name}/", outline, StringComparison.Ordinal);
+
+        foreach (var project in (string[])["|-- api/", "|-- components/", "`-- domain/"])
+        {
+            Assert.Contains(project, outline, StringComparison.Ordinal);
+        }
+
+        // The single-project layout the outline used to show.
+        Assert.DoesNotContain("src/app", content, StringComparison.Ordinal);
+    }
+
+    // Given a web description, when the file is generated, then the guidance requires
+    // every consumed service to be reached through an interface and an InjectionToken.
+    [Fact]
+    public async Task Given_a_web_description_When_generated_Then_services_are_consumed_through_a_token()
+    {
+        using var directory = TemporaryRepository.WithoutGit();
+
+        var content = await GenerateAsync(directory, "init", "--prompt", WebDescription);
+
+        Assert.Contains("InjectionToken", content, StringComparison.Ordinal);
+        Assert.Contains("I<Entity>Service", content, StringComparison.Ordinal);
+        Assert.Contains("inject(", content, StringComparison.Ordinal);
+
+        // The rule is worthless without the two halves that make it enforceable: a
+        // consumer never naming a concrete class, and HTTP confined to the api layer.
+        Assert.Contains("concrete implementation", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("HTTP", content, StringComparison.Ordinal);
+    }
+
     // Given the web archetype, when the file is generated, then the Angular workspace and
     // the design system are described as the deliverables they are.
     [Fact]

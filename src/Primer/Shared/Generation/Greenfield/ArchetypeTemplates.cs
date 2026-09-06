@@ -65,8 +65,9 @@ internal static class ArchetypeTemplates
           acceptance criteria, and nothing more. Simple in design, never reduced in scope.
         - Apply SOLID principles throughout the codebase.
         - Organize features and behaviors into vertical slices.
-        - Keep back-end code in `backend/` and front-end code in `frontend/`. Within each,
-          keep source in `src` and tests in `tests`.
+        - Keep back-end code in `backend/`, with source in `src` and tests in `tests`. The
+          front end is an Angular workspace at `frontend/`, and every project in it lives
+          under `frontend/projects/`.
         - A command-line tool is another project under `backend/src`, not a second root.
 
         ## Backend
@@ -82,12 +83,29 @@ internal static class ArchetypeTemplates
 
         ## Frontend
 
-        - Organize the workspace into `api`, `components`, and `domain` library projects,
-          plus one application project that consumes them and launches the app.
+        - Organize `frontend/projects/` into `api`, `components`, and `domain` library
+          projects, plus one application project that consumes them and launches the app.
         - Prefer signals over RxJS. Reach for RxJS only for genuine streams and events.
         - No single-file components. Template, styles, and class each live in their own file.
-        - Consume services through an interface, never a concrete class.
         - Keep components presentational. Behavior belongs in services, state in signals.
+
+        ### Interface-driven service consumption - mandatory on the frontend
+
+        Every service an application consumes is reached through an interface and an
+        `InjectionToken`. No component, store, or feature imports a concrete implementation.
+
+        - `IQuoteService` declares the behavioral contract and `QUOTE_SERVICE` is its
+          `InjectionToken`. The interface, the token, and each implementation live in
+          separate files.
+        - Contracts are named `I<Entity>Service` in the singular, with no `Api` suffix. The
+          `I` prefix marks a swappable contract; data shapes (`QuoteResult`) take no prefix,
+          and the production implementation takes the unprefixed name (`QuoteService`),
+          never an `Impl` suffix.
+        - Consumers call `inject(QUOTE_SERVICE)` only. Application composition binds the
+          token to the HTTP adapter in production and to a controlled mock under Playwright,
+          so a test never reaches the real implementation.
+        - HTTP calls and observable-to-signal conversion stay inside the `api`
+          implementations; `domain` types carry no HTTP dependency.
 
         ## Design System
 
@@ -123,7 +141,8 @@ internal static class ArchetypeTemplates
         |   |-- src/
         |   `-- tests/
         |-- frontend/
-        |   `-- src/app/
+        |   `-- projects/
+        |       |-- {{ProjectName}}/
         |       |-- api/
         |       |-- components/
         |       `-- domain/
