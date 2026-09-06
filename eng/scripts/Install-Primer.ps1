@@ -1,5 +1,9 @@
 #!/usr/bin/env pwsh
 
+# The ternary operator and $IsWindows are PowerShell 7 features. Windows PowerShell 5.1
+# fails on them at parse time, which reports a syntax error rather than the real problem.
+#requires -Version 7.0
+
 <#
 .SYNOPSIS
     Builds Primer from source when needed and installs it as a .NET global tool.
@@ -112,10 +116,21 @@ function Test-PackageIsCurrent {
 
     # Anything the packed output depends on. Test sources are deliberately excluded:
     # they cannot change the tool that gets installed.
+    #
+    # The root files are named one by one rather than filtered with -Include, because
+    # -Include is silently ignored when -Path is a directory and -Recurse is absent.
+    # Written that way the filter matches nothing, which would hide every one of these
+    # files from the staleness check: README.md is packed into the package, and the two
+    # props files carry its identity and its dependency versions.
+    $rootInputs = @('Directory.Build.props', 'Directory.Packages.props', 'global.json', 'README.md') |
+        ForEach-Object { Join-Path $repositoryRoot $_ } |
+        Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+        ForEach-Object { Get-Item -LiteralPath $_ }
+
     $inputs = @(
         Get-ChildItem -Path (Join-Path $repositoryRoot 'src') -Recurse -File -Include '*.cs', '*.csproj', '*.json' -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
-        Get-ChildItem -Path $repositoryRoot -File -Include 'Directory.Build.props', 'Directory.Packages.props', 'global.json', 'README.md' -ErrorAction SilentlyContinue
+        $rootInputs
     )
 
     $newestInput = $inputs | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
