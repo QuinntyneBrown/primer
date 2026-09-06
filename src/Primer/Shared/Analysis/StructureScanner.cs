@@ -6,6 +6,12 @@ namespace Primer.Shared.Analysis;
 /// <summary>What a bounded walk of the repository found.</summary>
 internal sealed record ScanResult(StructureSummary Summary, IReadOnlyList<SkippedFile> Skipped);
 
+/// <summary>
+/// The repository-relative paths Primer itself writes. Supplied by composition rather than
+/// read from the generator, so analysis stays independent of what generates.
+/// </summary>
+internal sealed record GeneratedArtifactPaths(IReadOnlySet<string> Paths);
+
 /// <summary>Walks the repository within the analysis budget.</summary>
 internal interface IStructureScanner
 {
@@ -19,6 +25,7 @@ internal interface IStructureScanner
 internal sealed class BoundedStructureScanner(
     IIgnoreMatcher ignoreMatcher,
     FileProbe probe,
+    GeneratedArtifactPaths generated,
     IOptions<PrimerOptions> options) : IStructureScanner
 {
     /// <summary>Paths whose content is never read, whatever the ignore rules say.</summary>
@@ -61,6 +68,15 @@ internal sealed class BoundedStructureScanner(
                 var relative = Relative(rootPath, child);
 
                 if (relative is ".git" || ignoreMatcher.IsIgnored(relative))
+                {
+                    continue;
+                }
+
+                // A directory holding nothing but Primer's own output exists because of
+                // Primer, not because of how this repository is organised. Reporting it
+                // would also make a run describe the tree its previous run created, so the
+                // second run's AGENTS.md would differ from the first's.
+                if (HoldsOnlyGeneratedFiles(child, rootPath))
                 {
                     continue;
                 }
@@ -108,6 +124,23 @@ internal sealed class BoundedStructureScanner(
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Whether a directory's whole content is generated. An empty directory is not: it says
+    /// nothing about Primer, so it keeps whatever meaning the repository gave it.
+    /// </summary>
+    private bool HoldsOnlyGeneratedFiles(string directory, string rootPath)
+    {
+        if (SafeEnumerate(directory, isDirectory: true).Count > 0)
+        {
+            return false;
+        }
+
+        var files = SafeEnumerate(directory, isDirectory: false);
+
+        return files.Count > 0
+            && files.TrueForAll(file => generated.Paths.Contains(Relative(rootPath, file)));
     }
 
     private static List<string> SafeEnumerate(string directory, bool isDirectory)

@@ -16,6 +16,8 @@ public sealed class SafeWriteTests
 {
     private static readonly TerminalCapabilities Capabilities = new(80, false, true, false);
 
+    private static readonly char[] NewlineCharacters = ['\r', '\n'];
+
     private static AtomicFileWriter Writer(TemporaryRepository repository) =>
         new(new RepositoryLocation(repository.Path), new LineEndingPolicy(new RepositoryLocation(repository.Path)));
 
@@ -201,6 +203,35 @@ public sealed class SafeWriteTests
         Assert.Equal(first, repository.Read("AGENTS.md"));
         Assert.Equal(FileAction.Unchanged, Assert.Single(secondPlan.Entries).Action);
         Assert.Equal(firstWrite, File.GetLastWriteTimeUtc(Path.Combine(repository.Path, "AGENTS.md")));
+    }
+
+    // Given an unchanged repository, when primer init is run a second time, then every
+    // target path is reported unchanged and no file's last-write timestamp moves. Running
+    // the real command is what proves it: the first run's own output lands in the tree the
+    // second run analyses, so a run that read its own output would differ here.
+    [Fact]
+    public async Task Given_an_unchanged_repository_When_init_runs_twice_Then_every_target_is_unchanged()
+    {
+        using var repository = new TemporaryRepository();
+        repository.Write("Primer.sln", "Microsoft Visual Studio Solution File");
+
+        await PrimerCliHarness.RunAsync("init", "--path", repository.Path);
+
+        var before = Directory
+            .EnumerateFiles(repository.Path, "*", SearchOption.AllDirectories)
+            .ToDictionary(path => path, File.GetLastWriteTimeUtc, StringComparer.Ordinal);
+
+        var result = await PrimerCliHarness.RunAsync("init", "--path", repository.Path);
+
+        Assert.Equal((int)ExitCode.Success, result.ExitCode);
+        Assert.All(
+            result.StandardOutput.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries),
+            line => Assert.StartsWith("unchanged:", line.Trim(), StringComparison.Ordinal));
+        Assert.Equal(
+            before,
+            Directory
+                .EnumerateFiles(repository.Path, "*", SearchOption.AllDirectories)
+                .ToDictionary(path => path, File.GetLastWriteTimeUtc, StringComparer.Ordinal));
     }
 
     // Given a repository whose generated files exist, when a run is repeated,

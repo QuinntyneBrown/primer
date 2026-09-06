@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Primer.Shared.Analysis;
 using Primer.Shared.Generation;
+using Primer.Shared.Generation.Greenfield;
 using Primer.Shared.Mcp;
 using Primer.Shared.Presentation;
 using Primer.Shared.Verification;
@@ -99,12 +100,25 @@ internal static class PrimerHostBuilder
         services.AddSingleton(console);
         services.AddSingleton<ErrorPresenter>();
         services.AddSingleton<ITemplateLocator, TemplateLocator>();
+
+        // Templates are content the generators own. Composition hands the locator what
+        // is built in; the locator's own job is only to prefer a repository override.
+        services.AddSingleton(new BuiltInTemplates(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [TemplateNames.AgentsFile] = AgentsFileGenerator.DefaultTemplate,
+            [ArchetypeTemplates.WebName] = ArchetypeTemplates.Web,
+            [ArchetypeTemplates.CliName] = ArchetypeTemplates.Cli,
+        }));
         services.AddSingleton<EffectiveSettingsReporter>();
 
         services.AddSingleton<IRepositoryLocator, GitRepositoryLocator>();
         services.AddSingleton<IIgnoreMatcher, GitIgnoreMatcher>();
         services.AddSingleton<ISecretRedactor, PatternSecretRedactor>();
         services.AddSingleton<FileProbe>();
+
+        // Generation states what it writes; analysis is told, so the two stay
+        // independent while a run still never reads its own output back as fact.
+        services.AddSingleton(new GeneratedArtifactPaths(AgentTargetRegistry.GeneratedPaths));
         services.AddSingleton<IStructureScanner, BoundedStructureScanner>();
         services.AddSingleton<IConventionDetector, ConventionDetector>();
         services.AddSingleton<IRepositoryAnalyzer, RepositoryAnalyzer>();
@@ -130,6 +144,10 @@ internal static class PrimerHostBuilder
         services.AddSingleton<GroundingValidator>();
         services.AddSingleton<NestedProjectPlanner>();
         services.AddSingleton<IAgentsFileGenerator, AgentsFileGenerator>();
+
+        services.AddSingleton<PromptSource>();
+        services.AddSingleton<IPromptClassifier, KeywordPromptClassifier>();
+        services.AddSingleton<IGreenfieldGenerator, GreenfieldGenerator>();
 
         services.AddSingleton<LineEndingPolicy>();
         services.AddSingleton<OverwritePolicy>();

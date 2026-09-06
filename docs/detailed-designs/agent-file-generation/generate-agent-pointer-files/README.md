@@ -47,8 +47,10 @@ adds no output beyond the file that already exists.
 - **`IPointerFileGenerator`** and **`PointerFileGenerator`** — produce a
   `GeneratedFile` for a target according to its mechanism.
 - **`AgentSelection`** — the parsed `--agent` values, de-duplicated and expanded
-  when `all` is supplied. An empty selection defaults to Claude alone, so
-  `primer init` writes `AGENTS.md` and `CLAUDE.md` and nothing else.
+  when `all` is supplied. An empty selection expands to every supported target, so
+  `primer init` alone writes a file for each. `--agent` narrows that set rather
+  than opting into it: an unwanted pointer costs one line, while a missing one
+  costs that tool its guidance entirely.
 - **`UnsupportedAgentError`** — typed failure carrying the rejected value and the
   supported names, mapped to `ExitCode.Usage`.
 
@@ -60,7 +62,7 @@ requirement refines a level-1 (L1) requirement, cited by identifier.
 | L2 ID | Refines (L1) | Requirement |
 |-------|--------------|-------------|
 | `L2-019` | `L1-005` | The only non-empty line of a generated `CLAUDE.md` shall be the import directive `@AGENTS.md`, the import shall deliver the guidance into context, and the file shall end with exactly one trailing newline. |
-| `L2-020` | `L1-005` | The `--agent` option shall be repeatable, shall accept `all`, shall de-duplicate its values, and shall default to writing `AGENTS.md` and `CLAUDE.md` alone. |
+| `L2-020` | `L1-005` | The `--agent` option shall be repeatable, shall accept `all`, shall de-duplicate its values, and shall default to writing a file for every supported agent. |
 | `L2-021` | `L1-005` | Each agent's file shall be written to that tool's conventional path, Codex shall require no additional file, and a target supporting an import mechanism shall use it. |
 | `L2-022` | `L1-005` | An unsupported `--agent` value shall name the supported values, shall exit `2`, and shall leave every file unmodified. |
 

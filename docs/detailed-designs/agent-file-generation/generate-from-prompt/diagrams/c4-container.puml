@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Generate AGENTS.md from a prompt
+
+Person(dev, "Developer", "Supplies the description")
+Person_Ext(agent, "Coding agent", "Reads the generated guidance")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Classifies the description and emits the document")
+  Container(archetypes, "Archetype templates", "Built-in content or repository overrides", "Prescribe structure and conventions per solution shape")
+}
+
+System_Boundary(target, "Target directory") {
+  ContainerDb(brief, "Description file", "Text file", "Optional source of the description")
+  ContainerDb(agentsmd, "AGENTS.md", "Markdown file", "The seeded guidance")
+}
+
+Rel(dev, exe, "Invokes")
+Rel(exe, brief, "Reads the description from", "--prompt-file")
+Rel(exe, archetypes, "Renders the chosen archetype from")
+Rel(exe, agentsmd, "Writes the managed region into")
+Rel(agent, agentsmd, "Reads")
+@enduml

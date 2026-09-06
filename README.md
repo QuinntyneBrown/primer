@@ -109,7 +109,7 @@ nothing duplicated to drift.
 
 | Command | What it does |
 |---|---|
-| `primer init` | Generate `AGENTS.md` and the selected agent pointer files. |
+| `primer init` | Generate `AGENTS.md` and the selected agent pointer files, from the repository or from a description. |
 | `primer check` | Report whether the generated files still match the repository. |
 | `primer mcp list` | List the MCP servers this repository requires. |
 | `primer mcp check` | Report which required servers are missing or outdated. |
@@ -119,9 +119,47 @@ nothing duplicated to drift.
 
 | Option | Effect |
 |---|---|
-| `--agent <name>` | Write a pointer file for `codex`, `claude`, `gemini`, `copilot`, or `all`. Repeatable. Defaults to `claude`. |
+| `--agent <name>` | Narrow generation to `codex`, `claude`, `gemini`, `copilot`, or `all`. Repeatable. Defaults to `all`. |
 | `--recursive` | Also write nested guidance for each independent project in a multi-project repository. |
 | `--force` | Overwrite a file Primer did not generate, after backing it up. |
+| `--prompt <text>` | Describe a project that does not exist yet, instead of analysing this one. |
+| `--prompt-file <path>` | Read that description from a file. Mutually exclusive with `--prompt`. |
+| `--archetype <web\|cli>` | The solution shape to generate, when the description does not settle it. |
+
+## Starting a project that does not exist yet
+
+Analysing a repository is no help at the moment a project starts, because there is
+nothing to read. Describe it instead:
+
+```console
+mkdir my-app && cd my-app
+primer init --prompt "an Angular front end in the browser with a .NET backend API"
+```
+
+No `git init` is needed first. Primer picks a solution archetype from the description
+and writes that archetype's structure and conventions:
+
+- **web** — `backend/`, `frontend/`, `design-system/`, and `e2e/`, with Clean
+  Architecture, thin controllers over MediatR, an Angular workspace of `api`,
+  `components`, and `domain` libraries, and Playwright page objects.
+- **cli** — `src/` and `tests/` at the root, `System.CommandLine`, packaged as a .NET
+  tool, with integration tests as the acceptance tests.
+
+Selection is a fixed table of signal phrases: deterministic, offline, and no API key.
+A description it cannot settle is refused rather than guessed at, because the wrong
+folder structure is not something the reader can spot:
+
+```console
+$ primer init --prompt "a lending board for a church congregation"
+error: The description does not determine a solution archetype
+  next:    Re-run with --archetype naming one of: web, cli.
+```
+
+Pass `--archetype web` and it proceeds. The description itself becomes the Purpose
+section, quoted inside a fenced block so nothing in it reads as an instruction.
+
+Greenfield output is a **seed**. Once the code exists, run plain `primer init` and the
+file is regenerated from what is actually there.
 
 ## Global options
 

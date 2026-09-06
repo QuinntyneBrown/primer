@@ -8,6 +8,11 @@ namespace Primer.IntegrationTests.TestSupport;
 internal sealed class TemporaryRepository : IDisposable
 {
     internal TemporaryRepository()
+        : this(initialiseGit: true)
+    {
+    }
+
+    private TemporaryRepository(bool initialiseGit)
     {
         Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
@@ -15,9 +20,18 @@ internal sealed class TemporaryRepository : IDisposable
 
         Directory.CreateDirectory(Path);
 
-        // A .git directory is what marks the root; the tests never invoke git itself.
-        Directory.CreateDirectory(System.IO.Path.Combine(Path, ".git"));
+        if (initialiseGit)
+        {
+            // A .git directory is what marks the root; the tests never invoke git itself.
+            Directory.CreateDirectory(System.IO.Path.Combine(Path, ".git"));
+        }
     }
+
+    /// <summary>
+    /// A temporary directory that is deliberately not a git repository, for the greenfield
+    /// case: a project is described before `git init` has been run.
+    /// </summary>
+    internal static TemporaryRepository WithoutGit() => new(initialiseGit: false);
 
     /// <summary>Absolute path of the repository root.</summary>
     internal string Path { get; }

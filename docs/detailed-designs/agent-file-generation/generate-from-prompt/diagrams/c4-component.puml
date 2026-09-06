@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Generate AGENTS.md from a prompt
+
+Container_Boundary(exe, "primer executable") {
+  Component(init, "InitCommand", "System.CommandLine module", "Routes to the described-project path when a description is supplied")
+  Component(source, "PromptSource", "Resolver", "Resolves --prompt or --prompt-file into one description")
+  Component(classifier, "KeywordPromptClassifier", "IPromptClassifier", "Selects an archetype from a fixed signal table")
+  Component(generator, "GreenfieldGenerator", "IGreenfieldGenerator", "Renders the archetype template into a document")
+  Component(locator, "TemplateLocator", "ITemplateLocator", "Prefers a repository override over the built-in template")
+  Component(fence, "UntrustedContentFence", "Escaper", "Quotes the description as data")
+  Component(region, "ManagedRegion", "Wrapper", "Records tool version and input hash")
+  ComponentDb(target, "Target directory", "Working tree", "Receives AGENTS.md and the pointer files")
+}
+
+Rel(init, source, "Resolves the description through")
+Rel(init, classifier, "Selects an archetype through")
+Rel(init, generator, "Requests the document from")
+Rel(generator, locator, "Locates the archetype template through")
+Rel(generator, fence, "Quotes the description through")
+Rel(generator, region, "Wraps the body through")
+Rel(init, target, "Writes the planned files into")
+@enduml

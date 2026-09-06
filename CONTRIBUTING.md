@@ -19,11 +19,13 @@ selected automatically.
 git clone https://github.com/QuinntyneBrown/primer.git
 cd primer
 dotnet build Primer.slnx -c Release
-dotnet test --solution Primer.slnx -c Release -- --filter-not-trait "tier=slow"
+dotnet test --project tests/Primer.IntegrationTests -c Release -- --filter-not-trait "tier=slow"
 ```
 
-The fast tier runs in a few seconds and is what you should run while working. The slow
-tier packs and installs the tool and synthesises large repositories:
+The fast tier runs in a few seconds and is what you should run while working. Name the
+project rather than the solution: every test in `Primer.PerformanceTests` is slow, and a
+project the filter leaves with zero tests is reported as a failure. The slow tier packs
+and installs the tool and synthesises large repositories:
 
 ```console
 dotnet test --project tests/Primer.IntegrationTests -c Release -- --filter-trait "tier=slow"
@@ -39,7 +41,7 @@ rather than about the tool.
 Primer is built with **acceptance-test-driven development**. This is the part of the
 workflow most likely to be unfamiliar, and it is not optional.
 
-1. **Every behaviour starts as a requirement.** `docs/specs/L2.md` holds 62 detailed
+1. **Every behaviour starts as a requirement.** `docs/specs/L2.md` holds 58 detailed
    requirements, each with acceptance criteria in Given/When/Then form, each refining
    one of the 14 high-level requirements in `docs/specs/L1.md`.
 2. **A failing test comes before the implementation.** Write the integration test
@@ -53,9 +55,8 @@ workflow most likely to be unfamiliar, and it is not optional.
    //              inside the line ceiling.
    ```
 
-   This is enforced. `TraceabilityTests` fails the build if a requirement has no
-   covering test, if a test names a requirement that does not exist, or if a test file
-   declares no coverage at all.
+   Reviewers check this. A test with no trace header, or one naming a requirement that
+   does not exist, will be asked to fix it before merge.
 
 If your change introduces behaviour that no requirement describes, add the requirement
 first. A pull request that adds behaviour with no requirement behind it will be asked
@@ -63,7 +64,7 @@ to add one.
 
 ## Architecture rules
 
-These are asserted by `Primer.ArchitectureTests`, not merely encouraged:
+These are conventions. Reviewers hold them; no test asserts them:
 
 - Production code lives under `src/`, tests under `tests/`.
 - Each command's definition lives in a single file named after the command, and
@@ -74,11 +75,20 @@ These are asserted by `Primer.ArchitectureTests`, not merely encouraged:
   shared lives under `src/Primer/Shared/`.
 - No feature reaches the console or the file system directly. Both are reached through
   `IPrimerConsole` and `IFileWriter`.
+- Generation output is never generation input. Primer writes into the tree it analyses,
+  so analysis disregards the paths Primer writes — otherwise a second run describes the
+  repository the first run created.
 
 Warnings are errors for every project, and nullable reference types are enabled. If
 the build is failing on an analyser finding, fix the finding rather than suppressing
 it — and if a rule is genuinely wrong for this codebase, change `.editorconfig` in the
 same pull request and say why.
+
+**Do not add tests that assert these rules.** A `Primer.ArchitectureTests` project once
+did, and was deleted as overkill. Structure tests, banned-API scans, and traceability
+checks that parse `docs/specs` are all out, permanently — see `AGENTS.md`. The two
+permitted test projects are `tests/Primer.IntegrationTests` and
+`tests/Primer.PerformanceTests`.
 
 ## Pull requests
 
@@ -87,7 +97,7 @@ Before opening one:
 ```console
 dotnet build Primer.slnx -c Release
 dotnet format Primer.slnx --verify-no-changes
-dotnet test --solution Primer.slnx -c Release -- --filter-not-trait "tier=slow"
+dotnet test --project tests/Primer.IntegrationTests -c Release -- --filter-not-trait "tier=slow"
 ```
 
 All three must pass. CI runs the same three plus the packaging and performance tiers.
