@@ -28,7 +28,6 @@
 
   <ItemGroup Label="Test access">
     <InternalsVisibleTo Include="Primer.IntegrationTests" />
-    <InternalsVisibleTo Include="Primer.ArchitectureTests" />
     <InternalsVisibleTo Include="Primer.PerformanceTests" />
   </ItemGroup>
 

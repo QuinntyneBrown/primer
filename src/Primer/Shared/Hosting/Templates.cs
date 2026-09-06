@@ -24,7 +24,23 @@ internal enum TemplateToken
     Boundaries,
     ToolVersion,
     ContentHash,
+
+    /// <summary>The name of the project the guidance is for.</summary>
+    ProjectName,
+
+    /// <summary>The supplied description, quoted as data.</summary>
+    Purpose,
+
+    /// <summary>The project name in the form a namespace can actually use.</summary>
+    NamespacePrefix,
 }
+
+/// <summary>
+/// The built-in content for each template name, supplied by composition. A template is
+/// content the generator owns; the locator's only job is to prefer a repository override
+/// over what it was given, so the content itself does not live here.
+/// </summary>
+internal sealed record BuiltInTemplates(IReadOnlyDictionary<string, string> ByName);
 
 /// <summary>A located template and where it came from.</summary>
 internal sealed record TemplateSource(string Name, string Content, bool IsOverride);
@@ -70,28 +86,9 @@ internal interface ITemplateLocator
 /// </summary>
 internal sealed partial class TemplateLocator(
     RepositoryLocation location,
+    BuiltInTemplates builtIn,
     Microsoft.Extensions.Options.IOptions<PrimerOptions> options) : ITemplateLocator
 {
-    private static readonly Dictionary<string, string> BuiltIn = new(StringComparer.OrdinalIgnoreCase)
-    {
-        [TemplateNames.AgentsFile] = string.Join(
-            '\n',
-            "{{ProjectOverview}}",
-            "",
-            "{{Commands}}",
-            "",
-            "{{ProjectStructure}}",
-            "",
-            "{{Testing}}",
-            "",
-            "{{CodeStyle}}",
-            "",
-            "{{GitWorkflow}}",
-            "",
-            "{{Boundaries}}",
-            ""),
-    };
-
     [GeneratedRegex(@"\{\{(?<token>\w+)\}\}")]
     private static partial Regex TokenPattern { get; }
 
@@ -108,14 +105,14 @@ internal sealed partial class TemplateLocator(
             return new TemplateSource(name, content, IsOverride: true);
         }
 
-        if (!BuiltIn.TryGetValue(name, out var builtIn))
+        if (!builtIn.ByName.TryGetValue(name, out var supplied))
         {
             throw new TemplateTokenException(
                 $"No template named '{name}' is built in, and no override was found at '{overridePath}'.",
                 ExitCode.Configuration);
         }
 
-        return new TemplateSource(name, builtIn, IsOverride: false);
+        return new TemplateSource(name, supplied, IsOverride: false);
     }
 
     private static void EnsureTokensAreKnown(string content, string path)

@@ -44,6 +44,15 @@ internal static class AgentTargetRegistry
     internal static IReadOnlyList<string> SupportedNames { get; } =
         [.. Supported.Select(target => target.Name)];
 
+    /// <summary>
+    /// Every repository-relative path a run can write. Analysis disregards these, because
+    /// generation output must never become generation input.
+    /// </summary>
+    internal static IReadOnlySet<string> GeneratedPaths { get; } = Supported
+        .Select(target => target.RelativePath)
+        .Append(AgentsFileGenerator.FileName)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
     internal static AgentTarget Resolve(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -61,9 +70,11 @@ internal static class AgentTargetRegistry
 internal sealed record AgentSelection(IReadOnlyList<AgentTarget> Targets)
 {
     /// <summary>
-    /// Absent an explicit selection, a run writes AGENTS.md and CLAUDE.md and nothing else.
+    /// Absent an explicit selection, a run writes a file for every supported agent. The
+    /// --agent option narrows that set rather than opting into it: an unwanted pointer costs
+    /// one line, while a missing one costs that tool its guidance entirely.
     /// </summary>
-    internal static AgentSelection Default() => new([AgentTargetRegistry.Resolve("claude")]);
+    internal static AgentSelection Default() => new(AgentTargetRegistry.Supported);
 
     internal static AgentSelection Parse(IReadOnlyList<string> values)
     {

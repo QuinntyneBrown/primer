@@ -34,6 +34,13 @@ integration workflow already states how the repository is built, that command is
 taken in preference to one inferred from marker files, because the workflow is
 what actually runs.
 
+Generation output is never generation input. Primer writes files into the tree it
+analyses, so a later run would otherwise describe a repository its own earlier run
+created — and `AGENTS.md` would differ on every second run. Analysis therefore
+disregards the paths Primer writes, and a directory holding nothing but those is
+not reported as structure. A directory that also holds work someone else authored
+is repository structure and is reported as such.
+
 ## Description
 
 - **`IRepositoryAnalyzer`** and **`RepositoryAnalyzer`** — orchestrate the pass
@@ -55,6 +62,10 @@ what actually runs.
   flags, and the repository-relative paths it references.
 - **`IStructureScanner`** and **`BoundedStructureScanner`** — walk the tree within
   the budget, tracking visited real paths so a link cycle terminates.
+- **`GeneratedArtifactPaths`** — the repository-relative paths Primer itself
+  writes. Composition supplies them from the agent registry, so analysis stays
+  independent of what generates while still never reading a run's own output back
+  as a repository fact.
 - **`IIgnoreMatcher`** and **`GitIgnoreMatcher`** — evaluate `.gitignore` rules so
   ignored paths are neither listed nor read.
 - **`IConventionDetector`** and **`ConventionDetector`** — record `.editorconfig`,

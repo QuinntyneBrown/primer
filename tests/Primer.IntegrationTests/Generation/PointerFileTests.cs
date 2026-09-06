@@ -62,14 +62,35 @@ public sealed class PointerFileTests
         Assert.DoesNotContain("##", claude.Content, StringComparison.Ordinal);
     }
 
-    // Given no --agent option, when generation runs, then AGENTS.md and CLAUDE.md alone are
-    // written and no other tool-specific file is created.
+    // Given no --agent option, when generation runs, then the instruction file for every
+    // supported agent is produced and no other file is created.
     [Fact]
-    public void Given_no_agent_option_When_generated_Then_only_the_claude_pointer_is_produced()
+    public void Given_no_agent_option_When_generated_Then_every_supported_agent_file_is_produced()
     {
-        var files = Generate();
+        var paths = Generate().Select(file => file.RelativePath).ToList();
 
-        Assert.Equal("CLAUDE.md", Assert.Single(files).RelativePath);
+        // Codex reads AGENTS.md natively, so four supported agents yield three pointers.
+        Assert.Equal(3, paths.Count);
+        Assert.Contains("CLAUDE.md", paths);
+        Assert.Contains("GEMINI.md", paths);
+        Assert.Contains(".github/copilot-instructions.md", paths);
+    }
+
+    // Given no --agent option, when primer init is run against a repository, then every
+    // supported agent's file exists on disk, including one in a directory it had to create.
+    [Fact]
+    public async Task Given_no_agent_option_When_init_runs_Then_every_agent_file_is_written()
+    {
+        using var repository = new TemporaryRepository();
+        repository.Write("Primer.sln", "Microsoft Visual Studio Solution File");
+
+        var result = await PrimerCliHarness.RunAsync("init", "--path", repository.Path);
+
+        Assert.Equal((int)ExitCode.Success, result.ExitCode);
+        Assert.True(repository.Exists("AGENTS.md"));
+        Assert.True(repository.Exists("CLAUDE.md"));
+        Assert.True(repository.Exists("GEMINI.md"));
+        Assert.True(repository.Exists(".github/copilot-instructions.md"));
     }
 
     // Given --agent gemini --agent copilot, when generation runs, then the Gemini and

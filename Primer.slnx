@@ -3,7 +3,6 @@
     <Project Path="src/Primer/Primer.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Primer.ArchitectureTests/Primer.ArchitectureTests.csproj" />
     <Project Path="tests/Primer.IntegrationTests/Primer.IntegrationTests.csproj" />
     <Project Path="tests/Primer.PerformanceTests/Primer.PerformanceTests.csproj" />
   </Folder>

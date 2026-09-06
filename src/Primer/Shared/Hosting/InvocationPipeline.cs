@@ -19,7 +19,8 @@ internal static class InvocationPipeline
         ParseResult parseResult,
         InvocationConfiguration configuration,
         Func<IServiceProvider, GlobalOptionValues, CancellationToken, Task<ExitCode>> handler,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool requiresRepository = true)
     {
         ArgumentNullException.ThrowIfNull(parseResult);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -40,11 +41,16 @@ internal static class InvocationPipeline
 
         try
         {
-            var root = new GitRepositoryLocator().Locate(globals.TargetPath);
+            // Generating from a description needs no repository to read, and the moment a
+            // project is described is usually before `git init` has been run. Analysis
+            // still requires one, because without it there is nothing to analyse.
+            var rootPath = requiresRepository
+                ? new GitRepositoryLocator().Locate(globals.TargetPath).Path
+                : Path.GetFullPath(globals.TargetPath);
 
             var built = PrimerHostBuilder.Build(new PrimerHostOptions
             {
-                RepositoryRoot = root.Path,
+                RepositoryRoot = rootPath,
                 Environment = CapturedEnvironment(),
                 Output = configuration.Output,
                 Error = configuration.Error,

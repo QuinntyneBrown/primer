@@ -7,7 +7,49 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **`primer init --prompt` / `--prompt-file` generate guidance for a project that does
+  not exist yet.** Analysing a repository is no help at the moment a project starts, so
+  describe it instead and Primer writes the `AGENTS.md` before any code exists. No git
+  repository is required, because describing a project usually comes before `git init`.
+  A fixed, offline table of signal phrases picks one of two archetypes: a web
+  application (`backend/`, `frontend/`, `design-system/`, `e2e/`, Clean Architecture over
+  MediatR, an Angular workspace, Playwright page objects) or a command-line tool (`src/`
+  and `tests/` at the root, `System.CommandLine`, packaged as a .NET tool). A description
+  the table cannot settle is refused with exit `2` rather than guessed at, and
+  `--archetype web|cli` decides it; the wrong folder structure is not something a reader
+  can spot. The description becomes the Purpose section, quoted inside a labelled fence so
+  no sentence in it reads as an instruction. Greenfield output is a seed: once code
+  exists, a plain `primer init` regenerates from what is actually there.
+
+### Changed
+
+- **`primer init` writes a file for every supported agent by default.** `--agent` now
+  narrows that set rather than opting into it: an unwanted pointer costs one line,
+  while a missing one costs that tool its guidance entirely. `primer check` follows the
+  same default, so a repository generated before this change reports the agent files it
+  is missing until `primer init` is run again. `--agent claude` restores the previous
+  output.
+
+### Fixed
+
+- **Generation no longer reads its own output back as a repository fact.** Writing
+  `.github/copilot-instructions.md` creates a `.github` directory, which analysis then
+  reported as project structure — so a second `primer init` produced a different
+  `AGENTS.md` than the first, and `primer check` reported drift on a repository nobody
+  had touched. Analysis now disregards the paths Primer writes, and a directory holding
+  nothing but generated output is not repository structure. A `.github` directory with
+  workflows or templates in it is still reported.
+
+### Removed
+
+- **`Primer.ArchitectureTests`.** Nine tests asserting the shape of the source tree and
+  the traceability of `docs/specs` to test headers, none of which proved the tool works.
+  The rules they asserted remain, stated in `AGENTS.md` and `CONTRIBUTING.md` and held
+  by the compiler, `dotnet format`, and review. Requirements `L2-038`, `L2-039`,
+  `L2-040`, and `L2-043` are withdrawn with them; surviving identifiers are unchanged,
+  so existing test trace headers still resolve.
 
 ## [0.1.0] — Unreleased
 

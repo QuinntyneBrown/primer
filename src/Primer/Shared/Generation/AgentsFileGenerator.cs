@@ -25,6 +25,26 @@ internal sealed partial class AgentsFileGenerator(
     /// <summary>The generated document's name, at the root and in every nested directory.</summary>
     internal const string FileName = "AGENTS.md";
 
+    /// <summary>
+    /// The section order analysis mode composes. A section with nothing behind it renders
+    /// empty and the blank run it leaves is collapsed, so the order alone decides the shape.
+    /// </summary>
+    internal const string DefaultTemplate = """
+        {{ProjectOverview}}
+
+        {{Commands}}
+
+        {{ProjectStructure}}
+
+        {{Testing}}
+
+        {{CodeStyle}}
+
+        {{GitWorkflow}}
+
+        {{Boundaries}}
+        """;
+
     [GeneratedRegex(@"\{\{(?<token>\w+)\}\}")]
     private static partial Regex TokenPattern { get; }
 

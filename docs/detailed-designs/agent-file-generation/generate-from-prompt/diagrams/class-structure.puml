@@ -1,0 +1,86 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Generate AGENTS.md from a prompt
+
+enum SolutionArchetype {
+  WebApplication
+  CommandLineTool
+}
+
+class ArchetypeNames {
+  +{static} Web: string
+  +{static} Cli: string
+  +{static} Supported: IReadOnlyList<string>
+  +{static} Resolve(value: string): SolutionArchetype
+}
+
+class PromptText {
+  +Value: string
+}
+
+class PromptSource {
+  +Resolve(inline: string, filePath: string): PromptText
+}
+
+interface IPromptClassifier {
+  +Classify(description: string): SolutionArchetype?
+}
+
+class KeywordPromptClassifier {
+  -{static} FrontEndSignals: string[]
+  -{static} BackEndSignals: string[]
+  -{static} CommandLineSignals: string[]
+  +Classify(description: string): SolutionArchetype?
+}
+
+class ArchetypeTemplates {
+  +{static} Web: string
+  +{static} Cli: string
+  +{static} NameOf(archetype: SolutionArchetype): string
+}
+
+interface IGreenfieldGenerator {
+  +Generate(prompt: PromptText, archetype: SolutionArchetype): GeneratedFile
+}
+
+class GreenfieldGenerator {
+  +Generate(prompt: PromptText, archetype: SolutionArchetype): GeneratedFile
+  -NamespacePrefix(projectName: string): string
+}
+
+class BuiltInTemplates {
+  +ByName: IReadOnlyDictionary<string, string>
+}
+
+interface ITemplateLocator {
+  +Locate(name: string): TemplateSource
+}
+
+class GeneratedFile {
+  +RelativePath: string
+  +Content: string
+  +IsWhollyGenerated: bool
+}
+
+KeywordPromptClassifier ..|> IPromptClassifier
+GreenfieldGenerator ..|> IGreenfieldGenerator
+PromptSource --> PromptText : produces
+IPromptClassifier --> SolutionArchetype : selects
+ArchetypeNames --> SolutionArchetype : resolves
+GreenfieldGenerator ..> PromptText : renders
+GreenfieldGenerator ..> ArchetypeTemplates : names the template through
+GreenfieldGenerator --> ITemplateLocator : locates content through
+GreenfieldGenerator --> GeneratedFile : produces
+ITemplateLocator --> BuiltInTemplates : falls back to
+@enduml

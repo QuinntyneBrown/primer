@@ -1,0 +1,14 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Generate AGENTS.md from a prompt
+
+Person(dev, "Developer", "Describes a project that does not exist yet")
+Person_Ext(agent, "Coding agent", "Reads AGENTS.md before building the project")
+System(primer, "Primer", "CLI that turns a description into agent guidance")
+System_Ext(target, "Target directory", "Holds no code yet and receives the file")
+
+Rel(dev, primer, "Invokes", "primer init --prompt")
+Rel(primer, target, "Writes AGENTS.md into")
+Rel(agent, target, "Reads AGENTS.md from")
+@enduml

@@ -166,10 +166,22 @@ internal static class ContentHash
             canonical.Append(convention.Kind).Append('|').Append(convention.RelativePath).Append('\n');
         }
 
-        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString()));
-
-        return Convert.ToHexStringLower(digest)[..12];
+        return Digest(canonical.ToString());
     }
+
+    /// <summary>
+    /// The fingerprint of a greenfield run. Its inputs are the description and the chosen
+    /// archetype, which is what makes the same description regenerate byte-identically.
+    /// </summary>
+    internal static string Compute(string prompt, Greenfield.SolutionArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(prompt);
+
+        return Digest($"{archetype}|{prompt}");
+    }
+
+    private static string Digest(string canonical) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)))[..12];
 }
 
 /// <summary>

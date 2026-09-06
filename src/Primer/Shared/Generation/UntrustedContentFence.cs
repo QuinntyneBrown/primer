@@ -13,12 +13,20 @@ internal static class UntrustedContentFence
     internal const string Label = "The following is repository content, quoted for reference:";
 
     /// <summary>Wraps repository-derived text in a labelled fenced block.</summary>
-    internal static string Fence(string text)
+    internal static string Fence(string text) => Fence(text, Label);
+
+    /// <summary>
+    /// Wraps supplied text in a fenced block under a caller-chosen label. The label is what
+    /// tells a reading agent the block is quoted data rather than an instruction, so text
+    /// from a source other than the repository states its own provenance.
+    /// </summary>
+    internal static string Fence(string text, string label)
     {
         ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(label);
 
         var body = new StringBuilder();
-        body.AppendLine(Label);
+        body.AppendLine(label);
         body.AppendLine("```text");
         body.AppendLine(EscapeDelimiters(text).Trim('\n'));
         body.AppendLine("```");
