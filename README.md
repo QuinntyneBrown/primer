@@ -139,8 +139,9 @@ and writes that archetype's structure and conventions:
 - **web** — `backend/`, `frontend/`, `design-system/`, and `e2e/`, with Clean
   Architecture, thin controllers over MediatR, an Angular multi-project workspace of
   `api`, `components`, and `domain` libraries beside the application project under
-  `frontend/projects/`, every service reached through an interface and an injection
-  token, and Playwright page objects.
+  `frontend/projects/`, strict component placement across those projects, design
+  tokens owned by the design system, every service reached through an interface and an
+  injection token, and Playwright page objects.
 - **cli** — `src/` and `tests/` at the root, `System.CommandLine`, packaged as a .NET
   tool, with integration tests as the acceptance tests.
 

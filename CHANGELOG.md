@@ -15,8 +15,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   repository is required, because describing a project usually comes before `git init`.
   A fixed, offline table of signal phrases picks one of two archetypes: a web
   application (`backend/`, `frontend/`, `design-system/`, `e2e/`, Clean Architecture over
-  MediatR, an Angular multi-project workspace under `frontend/projects/` whose services
-  are reached through an interface and an injection token, Playwright page objects) or a
+  MediatR, an Angular multi-project workspace under `frontend/projects/` with strict
+  component placement, design tokens owned by the design system, and services reached
+  through an interface and an injection token, Playwright page objects) or a
   command-line tool (`src/`
   and `tests/` at the root, `System.CommandLine`, packaged as a .NET tool). A description
   the table cannot settle is refused with exit `2` rather than guessed at, and
