@@ -290,26 +290,59 @@ public sealed class SafeWriteTests
     public void Given_an_unwritable_target_When_applied_Then_the_original_survives_with_exit_three()
     {
         using var repository = new TemporaryRepository();
-        var target = repository.Write("AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+
+        // The target sits in its own directory so the lock can be applied there without
+        // stopping the fixture from cleaning itself up.
+        var target = repository.Write("locked/AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+        var directory = Path.GetDirectoryName(target)!;
         var before = File.ReadAllText(target);
 
         var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
-            .Plan([Managed("AGENTS.md", "# New")], force: false);
+            .Plan([Managed("locked/AGENTS.md", "# New")], force: false);
 
-        File.SetAttributes(target, FileAttributes.ReadOnly);
+        // Making a target unwritable is platform-specific. On Windows a read-only file
+        // cannot be replaced. On Unix, replacing a file is a rename, which needs write
+        // permission on the containing directory rather than on the file itself, so a
+        // read-only file there is still perfectly replaceable.
+        Lock(target, directory);
 
         try
         {
             var failure = Assert.Throws<UnwritableTargetException>(() => Writer(repository).Apply(plan));
 
             Assert.Equal(ExitCode.Configuration, failure.ExitCode);
-            File.SetAttributes(target, FileAttributes.Normal);
-            Assert.Equal(before, File.ReadAllText(target));
-            Assert.Empty(Directory.GetFiles(repository.Path, "*.tmp", SearchOption.AllDirectories));
         }
         finally
         {
+            Unlock(target, directory);
+        }
+
+        Assert.Equal(before, File.ReadAllText(target));
+        Assert.Empty(Directory.GetFiles(repository.Path, "*.tmp", SearchOption.AllDirectories));
+    }
+
+    private static void Lock(string target, string directory)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            File.SetAttributes(target, FileAttributes.ReadOnly);
+        }
+        else
+        {
+            File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        }
+    }
+
+    private static void Unlock(string target, string directory)
+    {
+        if (OperatingSystem.IsWindows())
+        {
             File.SetAttributes(target, FileAttributes.Normal);
+        }
+        else
+        {
+            File.SetUnixFileMode(
+                directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
         }
     }
 
