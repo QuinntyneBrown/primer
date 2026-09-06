@@ -346,6 +346,27 @@ public sealed class SafeWriteTests
         }
     }
 
+    // Given any file created by the tool, when its permissions are inspected on a POSIX
+    // host, then it is created with mode 0644 and no broader.
+    [Fact]
+    public void Given_a_posix_host_When_a_file_is_created_Then_its_mode_is_no_broader_than_0644()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("File modes are a POSIX concept; CI asserts this on Linux.");
+            return;
+        }
+
+        using var repository = new TemporaryRepository();
+        var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
+
+        Writer(repository).Apply(policy.Plan([Managed("AGENTS.md", "# Overview")], force: false));
+
+        var mode = File.GetUnixFileMode(Path.Combine(repository.Path, "AGENTS.md"));
+        Assert.Equal(UnixFileMode.None, mode & (UnixFileMode.GroupWrite | UnixFileMode.OtherWrite));
+        Assert.Equal(UnixFileMode.None, mode & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute));
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         var count = 0;
