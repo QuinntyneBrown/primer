@@ -35,6 +35,26 @@ internal sealed class PrimerOptionsValidator : IValidateOptions<PrimerOptions>
             failures.Add(Failure("Budget:NetworkTimeout", options.Budget.NetworkTimeout, "greater than zero"));
         }
 
+        for (var index = 0; index < options.McpRequirements.Count; index++)
+        {
+            var requirement = options.McpRequirements[index];
+
+            if (string.IsNullOrWhiteSpace(requirement.Name))
+            {
+                failures.Add(Failure($"McpRequirements:{index}:Name", requirement.Name, "a server name"));
+            }
+
+            if (string.IsNullOrWhiteSpace(requirement.VersionRange))
+            {
+                failures.Add(Failure($"McpRequirements:{index}:VersionRange", requirement.VersionRange, "a constraint"));
+            }
+
+            if (string.IsNullOrWhiteSpace(requirement.InstallMethod))
+            {
+                failures.Add(Failure($"McpRequirements:{index}:InstallMethod", requirement.InstallMethod, "an install method"));
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(options.TemplatePath))
         {
             failures.Add(Failure("TemplatePath", options.TemplatePath, "a non-empty relative path"));

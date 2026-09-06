@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Primer.Shared.Analysis;
 using Primer.Shared.Generation;
+using Primer.Shared.Mcp;
 using Primer.Shared.Presentation;
 using Primer.Shared.Verification;
 
@@ -135,6 +136,17 @@ internal static class PrimerHostBuilder
         services.AddSingleton<BackupWriter>();
         services.AddSingleton<IFileWriter, AtomicFileWriter>();
         services.AddSingleton<IDryRunReporter, DryRunReporter>();
+
+        services.AddSingleton<IMcpRequirementSource, ConfigurationMcpRequirementSource>();
+        services.AddSingleton<IMcpClientProbe, ConfiguredMcpClientProbe>();
+        services.AddSingleton<McpGapAnalyzer>();
+        services.AddSingleton<ArtifactVerifier>();
+        services.AddSingleton<McpInstaller>();
+        services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(AnalysisBudget.DefaultNetworkTimeoutSeconds) });
+        services.AddSingleton(provider => new ConsentPrompt(
+            provider.GetRequiredService<IPrimerConsole>(),
+            provider.GetRequiredService<ITerminalCapabilities>(),
+            System.Console.In));
 
         services.AddSingleton<DriftChecker>();
         services.AddSingleton<CheckResultPresenter>();

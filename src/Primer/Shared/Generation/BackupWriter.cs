@@ -9,11 +9,15 @@ namespace Primer.Shared.Generation;
 /// </summary>
 internal sealed class BackupWriter(RepositoryLocation location)
 {
-    internal string Backup(string relativePath)
+    internal string Backup(string path)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        var source = Path.Combine(location.Path, relativePath);
+        // The same writer backs up repository files and the client configurations the MCP
+        // installer edits, which live outside the repository entirely.
+        var source = Path.IsPathRooted(path)
+            ? path
+            : Path.Combine(location.Path, path);
         var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfff", CultureInfo.InvariantCulture);
         var destination = $"{source}.{stamp}.bak";
 

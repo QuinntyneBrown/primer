@@ -16,4 +16,15 @@ internal sealed class PrimerOptions
 
     /// <summary>Repository-relative directory searched for template overrides.</summary>
     public string TemplatePath { get; set; } = "templates";
+
+    /// <summary>The MCP servers this repository depends on.</summary>
+    public IList<McpRequirementOptions> McpRequirements { get; set; } = [];
+
+    /// <summary>
+    /// The agent clients whose registries are probed. Left empty here on purpose:
+    /// configuration binds a collection by index and never clears what is already in it, so
+    /// a declared list would merge with a seeded one instead of replacing it. The built-in
+    /// clients are applied only when a repository declares none.
+    /// </summary>
+    public IList<McpClientOptions> McpClients { get; set; } = [];
 }
