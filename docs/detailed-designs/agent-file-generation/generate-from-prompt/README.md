@@ -22,8 +22,9 @@ archetype
 Two archetypes exist. A **web application** has a served back end and a browser
 front end, and its guidance prescribes `backend/`, `frontend/`, `design-system/`,
 and `e2e/`, Clean Architecture over MediatR, an Angular multi-project workspace
-whose projects sit under `frontend/projects/`, services reached through an
-interface and an injection token, and Playwright page objects. A **command-line tool** runs on a machine with no browser front end,
+whose projects sit under `frontend/projects/`, a strict rule for which project a
+component belongs in, design tokens owned by the design system, services reached
+through an interface and an injection token, and Playwright page objects. A **command-line tool** runs on a machine with no browser front end,
 and its guidance prescribes `src/` and `tests/` at the root, `System.CommandLine`,
 and packaging as a .NET tool. A command-line tool named inside a web application
 is a project under `backend/src`, not a second archetype.
@@ -92,7 +93,7 @@ requirement refines a level-1 (L1) requirement, cited by identifier.
 |-------|--------------|-------------|
 | `L2-063` | `L1-015` | `primer init` shall accept a description through `--prompt` or `--prompt-file`, shall reject the two together, shall reject an absent or empty description, and shall require no git repository. |
 | `L2-064` | `L1-015` | The archetype shall be selected deterministically and offline, shall be overridable by `--archetype`, and a description determining no archetype shall be refused with exit `2` naming both archetypes. |
-| `L2-065` | `L1-015` | The web application archetype shall emit the `backend`, `frontend`, `design-system`, and `e2e` outline with every Angular project under `frontend/projects/`, Clean Architecture with thin controllers over a pinned MediatR, agreeing folders and namespaces, the library workspace, interface-and-token service consumption, and the design system as a standalone deliverable. |
+| `L2-065` | `L1-015` | The web application archetype shall emit the `backend`, `frontend`, `design-system`, and `e2e` outline with every Angular project under `frontend/projects/`, Clean Architecture with thin controllers over a pinned MediatR, agreeing folders and namespaces, the library workspace, component placement by what a component knows, interface-and-token service consumption, and the design system as a standalone deliverable owning the design tokens. |
 | `L2-066` | `L1-015` | The CLI archetype shall emit `src` and `tests` at the root, and shall state .NET with `System.CommandLine`, packaging as an installable .NET tool, the Microsoft.Extensions patterns, and SOLID. |
 | `L2-067` | `L1-015` | Every archetype shall state that speed is not the goal, that implementation is radically simple, that development is acceptance-test-driven, and that architecture tests shall never be written. |
 | `L2-068` | `L1-015` | The description shall appear quoted as data, no Domain Language section shall be emitted, the same description shall regenerate byte-identically, the file shall stay within 150 lines untruncated, and the pointer files shall be written alongside. |

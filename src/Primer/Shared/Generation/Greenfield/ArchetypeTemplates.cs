@@ -65,9 +65,7 @@ internal static class ArchetypeTemplates
           acceptance criteria, and nothing more. Simple in design, never reduced in scope.
         - Apply SOLID principles throughout the codebase.
         - Organize features and behaviors into vertical slices.
-        - Keep back-end code in `backend/`, with source in `src` and tests in `tests`. The
-          front end is an Angular workspace at `frontend/`, and every project in it lives
-          under `frontend/projects/`.
+        - Keep back-end code in `backend/`, with source in `src` and tests in `tests`.
         - A command-line tool is another project under `backend/src`, not a second root.
 
         ## Backend
@@ -83,27 +81,40 @@ internal static class ArchetypeTemplates
 
         ## Frontend
 
-        - Organize `frontend/projects/` into `api`, `components`, and `domain` library
-          projects, plus one application project that consumes them and launches the app.
-        - Prefer signals over RxJS. Reach for RxJS only for genuine streams and events.
+        - `frontend/` is an Angular workspace: the `api`, `components`, and `domain`
+          libraries and the application project are siblings under `frontend/projects/`.
+        - Prefer signals over RxJS, and hold state in signals. Reach for RxJS only for
+          genuine streams and events.
         - No single-file components. Template, styles, and class each live in their own file.
-        - Keep components presentational. Behavior belongs in services, state in signals.
+
+        ### Where a component belongs
+
+        Placement follows what a component knows, and it is not negotiable.
+
+        - `components`: presentational only - buttons, cards, pills. Takes an input, emits
+          an output, injects no application service, imports no other project. An Angular
+          primitive like `Router` is fine; an `api` contract is not. That leaf position is
+          what lets the library publish to npm.
+        - `domain`: components that inject an `api` contract through its token and render
+          what it returns.
+        - The application project: routed page components, composing the other two and
+          owning routing, guards, and dialogs.
+        - Dependencies run one way, application to `domain` to `api`. A presentational
+          component that turns out to need a service moves to `domain`.
 
         ### Interface-driven service consumption - mandatory on the frontend
 
         Every service an application consumes is reached through an interface and an
         `InjectionToken`. No component, store, or feature imports a concrete implementation.
 
-        - `IQuoteService` declares the behavioral contract and `QUOTE_SERVICE` is its
-          `InjectionToken`. The interface, the token, and each implementation live in
-          separate files.
-        - Contracts are named `I<Entity>Service` in the singular, with no `Api` suffix. The
-          `I` prefix marks a swappable contract; data shapes (`QuoteResult`) take no prefix,
-          and the production implementation takes the unprefixed name (`QuoteService`),
-          never an `Impl` suffix.
-        - Consumers call `inject(QUOTE_SERVICE)` only. Application composition binds the
-          token to the HTTP adapter in production and to a controlled mock under Playwright,
-          so a test never reaches the real implementation.
+        - `IQuoteService` declares the contract and `QUOTE_SERVICE` is its `InjectionToken`;
+          the interface, the token, and each implementation live in separate files.
+        - Contracts are named `I<Entity>Service`, singular, with no `Api` suffix. Data
+          shapes (`QuoteResult`) take no prefix, and the production implementation takes
+          the unprefixed name (`QuoteService`), never an `Impl` suffix.
+        - Consumers call `inject(QUOTE_SERVICE)` only. Composition binds the token to the
+          HTTP adapter in production and to a mock under Playwright, so a test never
+          reaches the real implementation.
         - HTTP calls and observable-to-signal conversion stay inside the `api`
           implementations; `domain` types carry no HTTP dependency.
 
@@ -111,25 +122,25 @@ internal static class ArchetypeTemplates
 
         The design system is a deliverable in its own right, not a folder inside the front
         end. It sits at `design-system/`, beside `backend/` and `frontend/`, with its own
-        `package.json`, its own tests, and its own build, and it deploys as its own static
-        site. Build and review a component there before the application consumes it.
+        `package.json`, its own tests, and its own build, deploys as its own static site,
+        and carries no runtime dependency on the application.
+
+        It owns the design tokens - colour, spacing, type scale, radius - as CSS
+        custom properties under one prefix, and that copy is authoritative. The front end
+        mirrors them, and every component stylesheet reads them as `var(--<prefix>-<role>)`.
+        A hard-coded hex, dimension, or font stack in a component stylesheet is a defect:
+        add the missing token to the design system first.
 
         ## Testing Approach
 
-        Use acceptance test-driven development (ATDD):
+        Use acceptance test-driven development (ATDD): begin with a failing acceptance
+        test, link it to explicit criteria written using the Given-When-Then format,
+        implement until it passes, and keep criteria, tests, and implementation aligned.
 
-        - Begin with a failing acceptance test.
-        - Link each test to explicit acceptance criteria written using the Given-When-Then
-          format.
-        - Implement the behavior required to make the test pass.
-        - Keep acceptance criteria, tests, and implementation aligned.
-
-        Back end: integration tests against the API.
-
-        Front end: Playwright, using the Page Object Model.
-
-        - One page object per screen. It owns the selectors and the interactions.
-        - Tests state intent; page objects know the DOM. Never put a selector in a test.
+        Back end: integration tests against the API. Front end: Playwright, using the
+        Page Object Model - one page object per screen, owning the selectors and the
+        interactions. Tests state intent; page objects know the DOM. Never put a
+        selector in a test.
 
         {{{NoArchitectureTests}}}
 

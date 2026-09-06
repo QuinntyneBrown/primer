@@ -31,6 +31,14 @@ jobs:
       - name: Verify formatting
         run: dotnet format Primer.slnx --verify-no-changes --no-restore
 
+      # The agent-instruction-files skill bundles exported copies of the archetype
+      # templates so it can run without the tool installed. A copy that nothing checks
+      # is a copy that drifts, and the drift is invisible until somebody generates a
+      # project from the stale one.
+      - name: Verify the skill's bundled templates
+        shell: pwsh
+        run: ./eng/scripts/Export-SkillTemplates.ps1 -Check
+
       # The fast tier is the acceptance suite, so this step is what fails a pull request
       # whose behaviour has drifted from its requirements. Run the project by name.
       # Pointing the fast filter at the whole solution reaches Primer.PerformanceTests,

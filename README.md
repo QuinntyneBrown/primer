@@ -139,8 +139,9 @@ and writes that archetype's structure and conventions:
 - **web** — `backend/`, `frontend/`, `design-system/`, and `e2e/`, with Clean
   Architecture, thin controllers over MediatR, an Angular multi-project workspace of
   `api`, `components`, and `domain` libraries beside the application project under
-  `frontend/projects/`, every service reached through an interface and an injection
-  token, and Playwright page objects.
+  `frontend/projects/`, strict component placement across those projects, design
+  tokens owned by the design system, every service reached through an interface and an
+  injection token, and Playwright page objects.
 - **cli** — `src/` and `tests/` at the root, `System.CommandLine`, packaged as a .NET
   tool, with integration tests as the acceptance tests.
 
@@ -245,6 +246,7 @@ changes your machine. The guarantees are deliberate:
 | [`docs/specs/L2.md`](docs/specs/L2.md) | 62 detailed requirements with acceptance criteria. |
 | [`docs/detailed-designs/`](docs/detailed-designs/) | 14 feature designs with C4, class, and sequence diagrams. |
 | [`AGENTS.md`](AGENTS.md) | How to work in this repository. |
+| [`.claude/skills/agent-instruction-files/`](.claude/skills/agent-instruction-files/) | A Claude Code skill that writes the same greenfield files without the CLI installed. Its templates are exported from the CLI by `eng/scripts/Export-SkillTemplates.ps1`; run that after changing an archetype template, and `-Check` to detect drift. |
 
 Every requirement is covered by a test, and a traceability gate in CI fails the build
 if that stops being true.

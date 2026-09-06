@@ -247,6 +247,40 @@ public sealed class GreenfieldGenerationTests
         Assert.Contains("HTTP", content, StringComparison.Ordinal);
     }
 
+    // Given a web description, when the file is generated, then the guidance says which
+    // project a component belongs in, by what the component knows.
+    [Fact]
+    public async Task Given_a_web_description_When_generated_Then_component_placement_is_stated()
+    {
+        using var directory = TemporaryRepository.WithoutGit();
+
+        var content = await GenerateAsync(directory, "init", "--prompt", WebDescription);
+
+        // The presentational tier, and what disqualifies a component from it.
+        Assert.Contains("presentational", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("no application service", content, StringComparison.OrdinalIgnoreCase);
+
+        // The page tier. Naming the project matters more than naming the components:
+        // an agent has to know where to put the file.
+        Assert.Contains("page component", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("application project", content, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Given a web description, when the file is generated, then the design system owns
+    // the tokens and a hard-coded value in a component stylesheet is a defect.
+    [Fact]
+    public async Task Given_a_web_description_When_generated_Then_design_tokens_are_required()
+    {
+        using var directory = TemporaryRepository.WithoutGit();
+
+        var content = await GenerateAsync(directory, "init", "--prompt", WebDescription);
+
+        Assert.Contains("design token", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("custom propert", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("var(--", content, StringComparison.Ordinal);
+        Assert.Contains("hard-code", content, StringComparison.OrdinalIgnoreCase);
+    }
+
     // Given the web archetype, when the file is generated, then the Angular workspace and
     // the design system are described as the deliverables they are.
     [Fact]
