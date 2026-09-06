@@ -26,9 +26,14 @@ internal sealed class SafePathResolver : ISafePathResolver
     private readonly string _root;
 
     internal SafePathResolver(RepositoryRoot root)
+        : this((root ?? throw new ArgumentNullException(nameof(root))).Path)
     {
-        ArgumentNullException.ThrowIfNull(root);
-        _root = ResolveLinks(Path.GetFullPath(root.Path));
+    }
+
+    internal SafePathResolver(string rootPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(rootPath);
+        _root = ResolveLinks(Path.GetFullPath(rootPath));
     }
 
     public string Resolve(string candidate)
