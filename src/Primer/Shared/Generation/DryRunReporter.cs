@@ -41,7 +41,8 @@ internal sealed class DryRunReporter(IPrimerConsole console) : IDryRunReporter
             }
         }
 
-        console.WriteResult(report.ToString().TrimEnd('\n'));
+        // A diff wrapped to the terminal width is no longer a diff.
+        console.WritePreformatted(report.ToString().TrimEnd('\n'));
     }
 
     /// <summary>

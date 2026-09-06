@@ -10,32 +10,23 @@ namespace Primer.Shared.Hosting;
 /// </summary>
 internal static class PrimerCli
 {
-    private const string RootDescription =
-        "Creates contextual agent instruction files for a repository and verifies that the "
-        + "required Model Context Protocol components are installed.";
-
     private static readonly JsonOutputFormatter JsonFormatter = new();
 
-    internal static RootCommand CreateRootCommand()
-    {
-        var root = new RootCommand(RootDescription);
+    /// <summary>
+    /// Discovers every command in the assembly. Registration is by discovery rather than a
+    /// table, so adding a command means adding one file and editing nothing shared.
+    /// </summary>
+    internal static IReadOnlyList<ICommandModule> DiscoverModules() =>
+    [
+        .. typeof(PrimerCli).Assembly
+            .GetTypes()
+            .Where(type => !type.IsAbstract && !type.IsInterface && typeof(ICommandModule).IsAssignableFrom(type))
+            .OrderBy(type => type.Name, StringComparer.Ordinal)
+            .Select(type => (ICommandModule)Activator.CreateInstance(type)!),
+    ];
 
-        // The built-in version option carries a validator that rejects it alongside any
-        // other option, which would make `--version --format json` a parse failure.
-        foreach (var builtIn in root.Options.OfType<VersionOption>().ToList())
-        {
-            root.Options.Remove(builtIn);
-        }
-
-        root.Options.Add(GlobalOptions.Version);
-
-        foreach (var option in GlobalOptions.All)
-        {
-            root.Options.Add(option);
-        }
-
-        return root;
-    }
+    internal static RootCommand CreateRootCommand(InvocationConfiguration configuration) =>
+        RootCommandFactory.Create(DiscoverModules(), configuration);
 
     internal static async Task<int> RunAsync(
         string[] args,
@@ -44,17 +35,14 @@ internal static class PrimerCli
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var root = CreateRootCommand();
+        var root = CreateRootCommand(configuration);
         var parseResult = root.Parse(args);
 
-        if (parseResult.Errors.Count > 0)
+        if (parseResult.Errors.Count > 0 || parseResult.UnmatchedTokens.Count > 0)
         {
-            foreach (var error in parseResult.Errors)
-            {
-                configuration.Error.WriteLine(error.Message);
-            }
-
-            return (int)ExitCode.Usage;
+            // Rendered here rather than by Invoke, which prints its own message and picks
+            // its own non-zero code, neither of which satisfies the exit-code contract.
+            return (int)ParseErrorHandler.Render(parseResult, configuration);
         }
 
         // Answered before any host is built, so the version path constructs no

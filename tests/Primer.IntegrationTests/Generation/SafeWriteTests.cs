@@ -41,6 +41,28 @@ public sealed class SafeWriteTests
         Assert.False(repository.Exists("AGENTS.md"));
     }
 
+    // Given a dry-run diff wider than the terminal, when it is reported,
+    // then its lines are emitted intact rather than wrapped.
+    [Fact]
+    public void Given_a_wide_diff_When_reported_Then_its_lines_are_not_wrapped()
+    {
+        using var repository = new TemporaryRepository();
+        var wide = "# " + new string('x', 200);
+        repository.Write("AGENTS.md", ManagedRegion.Wrap("# Old", "0.1.0", "hash-0"));
+
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        var narrow = new TerminalCapabilities(40, false, true, false);
+        var console = new PrimerConsole(output, error, narrow, OutputFormat.Text, VerbosityLevel.Normal);
+
+        var plan = new OverwritePolicy(new RepositoryLocation(repository.Path))
+            .Plan([Managed("AGENTS.md", wide)], force: false);
+
+        new DryRunReporter(console).Report(plan);
+
+        Assert.Contains("+" + wide, output.ToString(), StringComparison.Ordinal);
+    }
+
     // Given a repository with an existing generated file, when a dry run is planned,
     // then a unified diff of the intended change is reported and no file is modified.
     [Fact]

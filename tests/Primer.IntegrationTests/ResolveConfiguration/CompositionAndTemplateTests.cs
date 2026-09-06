@@ -124,6 +124,8 @@ public sealed class CompositionAndTemplateTests
 
         public void WriteResult(object payload) => Written.Add(payload.ToString() ?? string.Empty);
 
+        public void WritePreformatted(string text) => Written.Add(text);
+
         public void WriteWarning(string message) => Written.Add(message);
 
         public void WriteDiagnostic(string message) => Written.Add(message);

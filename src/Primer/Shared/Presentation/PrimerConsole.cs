@@ -16,6 +16,12 @@ internal interface IPrimerConsole
 
     void WriteResult(object payload);
 
+    /// <summary>
+    /// Writes text whose own line structure carries meaning. A diff or a file preview is
+    /// corrupted by wrapping, so it is emitted exactly as composed.
+    /// </summary>
+    void WritePreformatted(string text);
+
     void WriteWarning(string message);
 
     void WriteDiagnostic(string message);
@@ -79,6 +85,24 @@ internal sealed class PrimerConsole : IPrimerConsole
             : _formatter.Render(payload);
 
         _output.WriteLine(rendered);
+    }
+
+    public void WritePreformatted(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        if (Verbosity is VerbosityLevel.Quiet)
+        {
+            return;
+        }
+
+        if (Format is OutputFormat.Json)
+        {
+            _output.WriteLine(_envelopeFormatter.Render(new OutputEnvelope { Payload = text }));
+            return;
+        }
+
+        _output.WriteLine(text);
     }
 
     public void WriteWarning(string message)
