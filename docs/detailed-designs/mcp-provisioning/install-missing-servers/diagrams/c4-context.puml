@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Install missing MCP servers
+
+Person(dev, "Developer", "Approves changes to their own machine")
+System(primer, "Primer", "CLI that installs required MCP servers after explicit consent")
+System_Ext(clients, "Agent clients", "Hold the registries Primer edits")
+System_Ext(distribution, "MCP distribution source", "Supplies pinned, checksummed artefacts over HTTPS")
+
+Rel(dev, primer, "Invokes and approves", "primer mcp install")
+Rel(primer, dev, "Displays the exact changes and asks before applying")
+Rel(primer, distribution, "Downloads a pinned artefact from", "HTTPS only")
+Rel(primer, clients, "Edits the server registry of, after backing it up")
+@enduml

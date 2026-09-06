@@ -1,0 +1,77 @@
+@startuml
+title UML sequence behaviour - Determine the MCP gap
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "McpCheckHandler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "ConfigurationMcpRequirementSource" as source
+  participant "IMcpClientProbe set" as probes
+  participant "McpGapAnalyzer" as analyzer
+end box
+box "Backend - Infrastructure" #FFF4E5
+  database "Client configurations" as cfg
+  participant "MCP distribution source" as registry
+end box
+
+dev -> shell : primer mcp check
+shell -> handler : Invoke
+handler -> source : Read the declared requirements
+alt Every declaration is complete
+  source --> handler : L2-028 requirements with name, constraint, and method
+else A declaration omits a required field
+  source --> handler : Configuration failure naming the entry
+  handler --> shell : ExitCode.Configuration
+end
+
+loop For each known agent client
+  handler -> probes : Probe the client
+  probes -> cfg : Read the client configuration
+  alt The configuration is present and parses
+    cfg --> probes : Registered servers and versions
+  else The client is not installed
+    cfg --> probes : Absent
+    probes -> probes : Report L2-029 not configured and continue
+  else The configuration cannot be parsed
+    cfg --> probes : Unparseable content
+    probes --> handler : MalformedClientConfigError with the path
+    handler --> shell : ExitCode.Configuration, the file left untouched
+  end
+end
+probes --> handler : ClientProbeResult per client
+
+handler -> analyzer : Compare requirements against the probe results
+opt A version fact requires the network
+  analyzer -> registry : Query within the configured timeout
+  alt The query returns
+    registry --> analyzer : Version facts
+  else The network is unreachable or the timeout elapses
+    analyzer -> analyzer : Mark the fact L2-033 Unknown and continue
+  end
+end
+analyzer --> handler : McpGapReport with a status per requirement
+
+alt Every requirement is satisfied
+  handler --> shell : ExitCode.Success
+else Any requirement is missing or outdated
+  handler --> shell : L2-030 ExitCode.Verification and the remediation command
+end
+shell --> dev : Present the gap and the next action
+@enduml

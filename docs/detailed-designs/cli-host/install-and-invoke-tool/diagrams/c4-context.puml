@@ -1,0 +1,16 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Install and invoke the tool
+
+Person(dev, "Developer", "Installs and runs Primer against a repository")
+System(primer, "Primer", "CLI that generates agent instruction files and verifies MCP components")
+System_Ext(sdk, ".NET SDK", "Installs and hosts .NET tools")
+System_Ext(feed, "NuGet feed", "Distributes the Primer package")
+System_Ext(repo, "Source repository", "Git working tree the developer targets")
+
+Rel(dev, sdk, "Installs the tool using", "dotnet tool install")
+Rel(sdk, feed, "Downloads the package from", "HTTPS")
+Rel(dev, primer, "Invokes", "primer <command>")
+Rel(primer, repo, "Reads and writes files in", "file system")
+@enduml

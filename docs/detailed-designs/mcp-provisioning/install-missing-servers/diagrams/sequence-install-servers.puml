@@ -1,0 +1,91 @@
+@startuml
+title UML sequence behaviour - Obtain consent, verify, and apply
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "McpInstallCommand" as command
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "McpInstaller" as installer
+  participant "ConsentGate" as gate
+  participant "ArtifactVerifier" as verifier
+  participant "ClientConfigEditor" as editor
+end box
+box "Backend - Infrastructure" #FFF4E5
+  participant "BackupWriter" as backup
+  participant "MCP distribution source" as distribution
+  database "Client configuration" as cfg
+end box
+
+dev -> shell : primer mcp install
+shell -> command : Invoke
+command -> installer : Install against the gap report
+installer -> installer : Build the plan of exact changes
+
+installer -> gate : Obtain L2-031 consent
+alt --yes was supplied
+  gate --> installer : Approved
+else A person is present
+  gate -> shell : Display the exact changes and ask
+  shell --> dev : Present the plan
+  dev --> shell : Approve or decline
+  alt Approved
+    gate --> installer : Approved
+  else Declined
+    gate --> installer : Declined
+    installer --> shell : ExitCode.Success, nothing modified
+  end
+else Non-interactive and --yes was not supplied
+  gate --> installer : Refused
+  installer --> shell : ExitCode.Configuration, --yes is required
+end
+
+loop For each planned action
+  installer -> verifier : Verify the artefact
+  verifier -> distribution : Request the L2-050 pinned version over HTTPS
+  alt The source is not HTTPS
+    verifier --> installer : InsecureSourceError, ExitCode.Configuration
+  else The response redirects to an undeclared host
+    verifier --> installer : RedirectRefusedError, redirect not followed
+  else The checksum does not match
+    distribution --> verifier : Artefact bytes
+    verifier --> installer : ChecksumMismatchError, nothing installed
+  else The artefact verifies
+    distribution --> verifier : Artefact bytes
+    verifier --> installer : VerifiedArtifact
+  end
+end
+
+installer -> backup : Copy the prior configuration
+backup -> cfg : Write the timestamped backup
+cfg --> backup : Backup path
+backup --> installer : Reported backup path
+
+installer -> editor : Apply the plan
+editor -> cfg : Edit only the targeted entries
+note right of editor
+  L2-032 preserves every unrelated entry,
+  leaves valid JSON, and leaves an
+  already-satisfied entry unchanged.
+end note
+cfg --> editor : Edit result
+editor --> installer : Applied
+installer --> shell : ExitCode.Success
+shell --> dev : Report the changes and the backup path
+@enduml

@@ -1,0 +1,80 @@
+@startuml
+title UML sequence behaviour - Plan, preview, and write
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "InitCommandHandler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "OverwritePolicy" as policy
+  participant "ManagedRegionMerger" as merger
+  participant "DryRunReporter" as dryrun
+end box
+box "Backend - Infrastructure" #FFF4E5
+  participant "AtomicFileWriter" as writer
+  participant "BackupWriter" as backup
+  database "Working tree" as tree
+end box
+
+dev -> shell : primer init --dry-run
+shell -> handler : Invoke with the generated files
+
+loop For each target
+  handler -> tree : Read the existing content, when present
+  tree --> handler : Current content or absence
+  handler -> policy : Decide the action
+
+  alt The file carries a managed region
+    policy -> merger : Replace the delimited block
+    merger --> policy : L2-024 surround preserved byte-for-byte
+  else The file is absent
+    policy --> handler : Create
+  else Content is unchanged
+    policy --> handler : L2-025 Unchanged, the file is not opened for writing
+  else The file has no region and --force was not passed
+    policy --> handler : Refuse with ExitCode.Configuration
+  else The region is malformed
+    policy --> handler : MalformedRegionError, ExitCode.Configuration
+  end
+end
+
+alt --dry-run was supplied
+  handler -> dryrun : Report the plan
+  dryrun --> shell : L2-023 intended content or unified diff, nothing written
+else The run applies changes
+  opt A forced overwrite is planned
+    handler -> backup : Copy the prior content
+    backup -> tree : Write the timestamped backup
+    tree --> backup : Backup path
+    backup --> handler : Reported backup path
+  end
+  handler -> writer : Apply the plan
+  writer -> writer : Apply L2-026 encoding, line ending, and trailing newline
+  writer -> tree : Write through a temporary file, then replace
+  note right of writer
+    An interrupted write leaves the original
+    content intact and no partial file.
+  end note
+  tree --> writer : Write result
+  writer --> handler : FileAction per path
+end
+
+handler --> shell : ExitCode.Success
+shell --> dev : Report created, updated, and unchanged paths
+@enduml

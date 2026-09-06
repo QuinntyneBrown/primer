@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Check required MCP servers
+
+Person(dev, "Developer", "Runs the check")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Compares requirements against installed servers")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(manifest, "Requirement manifest", "primer.json", "Declares required servers and constraints")
+}
+
+System_Boundary(machine, "Developer machine") {
+  ContainerDb(claudecfg, "Claude Code configuration", "JSON file", "Registers the servers Claude Code launches")
+  ContainerDb(codexcfg, "Codex configuration", "JSON file", "Registers the servers Codex launches")
+}
+
+System_Ext(registry, "MCP distribution source", "Supplies version facts")
+
+Rel(dev, exe, "Invokes")
+Rel(exe, manifest, "Reads declared requirements from")
+Rel(exe, claudecfg, "Probes", "read only")
+Rel(exe, codexcfg, "Probes", "read only")
+Rel(exe, registry, "Queries within the configured timeout", "HTTPS")
+@enduml

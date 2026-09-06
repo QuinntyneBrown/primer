@@ -1,0 +1,26 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Present output and diagnostics
+
+Container_Boundary(exe, "primer executable") {
+  Component(caps, "TerminalCapabilities", "Detection", "Width, colour, encoding, interactivity")
+  Component(console, "PrimerConsole", "Write path", "Owns stream selection for every write")
+  Component(text, "TextOutputFormatter", "IOutputFormatter", "Wraps and elides to the detected width")
+  Component(json, "JsonOutputFormatter", "IOutputFormatter", "Emits one envelope, free of escape sequences")
+  Component(envelope, "OutputEnvelope", "Record", "Carries schemaVersion, payload, error, exitCode")
+  Component(elider, "PathElider", "Helper", "Shortens a path from the middle")
+  Component(logger, "StderrLoggerProvider", "ILoggerProvider", "Routes every log record to stderr")
+  Component(errors, "ErrorPresenter", "Renderer", "Names the failure, the cause, and the next action")
+  Component(prompt, "ConsentPrompt", "Interaction", "Asks only when a person is present")
+}
+
+Rel(console, caps, "Applies the capability set from")
+Rel(console, text, "Renders through")
+Rel(console, json, "Renders through")
+Rel(json, envelope, "Emits")
+Rel(text, elider, "Shortens long paths with")
+Rel(errors, console, "Writes through")
+Rel(logger, console, "Writes through")
+Rel(prompt, caps, "Checks interactivity with")
+@enduml

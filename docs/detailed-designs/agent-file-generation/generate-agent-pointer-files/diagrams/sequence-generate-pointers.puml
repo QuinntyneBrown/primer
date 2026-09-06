@@ -1,0 +1,72 @@
+@startuml
+title UML sequence behaviour - Select targets and emit pointer files
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "InitCommandHandler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "AgentSelection" as selection
+  participant "AgentTargetRegistry" as registry
+  participant "PointerFileGenerator" as generator
+end box
+box "Backend - Infrastructure" #FFF4E5
+  participant "AtomicFileWriter" as writer
+  database "Working tree" as tree
+end box
+
+dev -> shell : primer init --agent claude --agent copilot
+shell -> handler : Invoke with the parsed values
+handler -> selection : Parse and de-duplicate the L2-020 values
+selection --> handler : Distinct target names
+
+loop For each selected name
+  handler -> registry : Resolve the name
+  alt The name is supported
+    registry --> handler : AgentTarget with its L2-021 conventional path
+  else The name is unsupported
+    registry --> handler : UnsupportedAgentError listing supported values
+    handler --> shell : ExitCode.Usage
+    note right of registry
+      L2-022 leaves every file unmodified
+      on this path.
+    end note
+  end
+end
+
+loop For each resolved target
+  handler -> generator : Generate for the target
+  alt Mechanism is Native
+    generator --> handler : No file, AGENTS.md already serves the agent
+  else Mechanism is Import
+    generator -> generator : Render the L2-019 sole import directive
+    generator --> handler : GeneratedFile with one trailing newline
+  else Mechanism is Instruction
+    generator -> generator : Render a direction to read AGENTS.md
+    generator --> handler : GeneratedFile restating nothing
+  end
+end
+
+handler -> writer : Write every generated file
+writer -> tree : Create the .github directory when required, then emit
+tree --> writer : Write result
+writer --> handler : FileAction per path
+handler --> shell : ExitCode.Success
+shell --> dev : Report the emitted pointer files
+@enduml

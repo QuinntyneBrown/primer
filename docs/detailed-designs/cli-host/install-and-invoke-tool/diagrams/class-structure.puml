@@ -1,0 +1,52 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Install and invoke the tool
+
+enum ExitCode {
+  Success = 0
+  Unexpected = 1
+  Usage = 2
+  Configuration = 3
+  Verification = 4
+}
+
+class Program {
+  +{static} Main(args: string[]): Task<int>
+}
+
+class PrimerHostBuilder {
+  +Build(args: string[]): IHost
+  -AddConfiguration(): void
+  -AddServices(): void
+}
+
+class BuildMetadata {
+  +{static} InformationalVersion: string
+  +{static} CommitSha: string
+}
+
+class VersionHandler {
+  +Handle(context: InvocationContext): Task<ExitCode>
+}
+
+interface IOutputFormatter {
+  +Write(payload: object): void
+}
+
+Program ..> PrimerHostBuilder : builds host with
+Program ..> VersionHandler : dispatches to
+Program --> ExitCode : returns
+VersionHandler ..> BuildMetadata : reads
+VersionHandler --> IOutputFormatter : writes through
+@enduml

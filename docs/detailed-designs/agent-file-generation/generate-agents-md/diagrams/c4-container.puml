@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Generate AGENTS.md
+
+Person(dev, "Developer", "Runs the command")
+Person_Ext(agent, "Coding agent", "Reads the generated guidance")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Composes and emits the document")
+  Container(templates, "Templates", "Embedded resources or repository overrides", "Supply the section skeletons")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(context, "Repository facts", "Working tree", "Marker, convention, and workflow files")
+  ContainerDb(agentsmd, "AGENTS.md", "Markdown file", "Root and, under --recursive, nested guidance")
+}
+
+Rel(dev, exe, "Invokes")
+Rel(exe, context, "Derives facts from")
+Rel(exe, templates, "Renders sections from")
+Rel(exe, agentsmd, "Writes the managed region into")
+Rel(agent, agentsmd, "Reads")
+@enduml

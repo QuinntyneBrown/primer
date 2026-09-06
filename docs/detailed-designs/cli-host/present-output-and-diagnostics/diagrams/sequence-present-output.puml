@@ -1,0 +1,65 @@
+@startuml
+title UML sequence behaviour - Render a result or a failure
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+  participant "stdout" as out
+  participant "stderr" as err
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "PrimerConsole" as console
+  participant "TerminalCapabilities" as caps
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "Command handler" as handler
+  participant "IOutputFormatter" as formatter
+  participant "ErrorPresenter" as errors
+end box
+
+dev -> shell : primer mcp check --format json
+shell -> caps : Detect width, colour, encoding, interactivity
+caps --> shell : Capability set
+note right of caps
+  L2-059 assumes 80 columns when no
+  width is detectable; L2-060 reports
+  no colour when NO_COLOR is set or
+  the stream is redirected.
+end note
+shell -> handler : Invoke the resolved handler
+
+alt The command succeeds
+  handler -> console : Write the result payload
+  console -> formatter : Render for the selected format
+  formatter --> console : One L2-058 envelope with schemaVersion
+  console -> out : Write the result only
+else An expected failure occurs
+  handler -> errors : Present the L2-056 failure
+  errors -> console : Write the cause and the next action
+  console -> err : Write the diagnostic
+  note right of errors
+    Exception detail is included only
+    at Diagnostic verbosity.
+  end note
+else An unhandled exception escapes
+  handler -> errors : Summarise in one line
+  errors -> err : Write the L2-057 summary
+  errors --> handler : ExitCode.Unexpected
+end
+
+console --> shell : Rendering complete
+shell --> dev : Present streams and exit status
+@enduml

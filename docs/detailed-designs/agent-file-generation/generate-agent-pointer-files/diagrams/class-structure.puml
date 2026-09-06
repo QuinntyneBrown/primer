@@ -1,0 +1,75 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Generate agent pointer files
+
+class AgentTarget {
+  +Name: string
+  +RelativePath: string
+  +Mechanism: PointerMechanism
+}
+
+enum PointerMechanism {
+  Native
+  Import
+  Instruction
+}
+
+class AgentTargetRegistry {
+  +{static} Supported: IReadOnlyList<AgentTarget>
+  +Resolve(name: string): AgentTarget
+  +SupportedNames(): IReadOnlyList<string>
+}
+
+class AgentSelection {
+  +Values: IReadOnlySet<string>
+  +{static} Parse(values: string[]): AgentSelection
+  +{static} Default(): AgentSelection
+}
+
+interface IPointerFileGenerator {
+  +Generate(target: AgentTarget): GeneratedFile
+}
+
+class PointerFileGenerator {
+  +Generate(target: AgentTarget): GeneratedFile
+  -RenderImport(): string
+  -RenderInstruction(): string
+}
+
+class UnsupportedAgentError {
+  +RejectedValue: string
+  +SupportedValues: IReadOnlyList<string>
+}
+
+class GeneratedFile {
+  +RelativePath: string
+  +Content: string
+  +Action: FileAction
+}
+
+enum FileAction {
+  Create
+  Update
+  Unchanged
+}
+
+IPointerFileGenerator <|.. PointerFileGenerator
+AgentSelection ..> AgentTargetRegistry : resolves through
+AgentTargetRegistry --> AgentTarget : returns
+AgentTargetRegistry ..> UnsupportedAgentError : raises
+AgentTarget --> PointerMechanism : declares
+PointerFileGenerator ..> AgentTarget : emits according to
+PointerFileGenerator --> GeneratedFile : produces
+GeneratedFile --> FileAction : declares
+@enduml

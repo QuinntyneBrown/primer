@@ -1,0 +1,27 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Maintain requirement traceability
+
+Person(contributor, "Contributor", "Maintains specification and tests together")
+System_Ext(ci, "Continuous integration", "Runs every gate")
+
+System_Boundary(gate, "Quality gates") {
+  Container(traceability, "Traceability check", "xUnit fixture", "Compares requirements against trace comments")
+  Container(suite, "Integration test suite", "xUnit project", "Runs hermetically and in parallel")
+  Container(workflow, "ci.yml", "GitHub Actions workflow", "Runs build, tests, format, and traceability")
+}
+
+System_Boundary(repo, "Primer repository") {
+  ContainerDb(specs, "docs/specs", "L1.md and L2.md", "Requirement identifiers and criteria")
+  ContainerDb(tests, "tests/Primer.IntegrationTests", "Test files", "Each carrying a trace comment header")
+}
+
+Rel(contributor, specs, "Adds criteria to")
+Rel(contributor, tests, "Adds tests to")
+Rel(traceability, specs, "Reads identifiers from")
+Rel(traceability, tests, "Reads trace comments from")
+Rel(ci, workflow, "Executes")
+Rel(workflow, traceability, "Runs")
+Rel(workflow, suite, "Runs")
+@enduml

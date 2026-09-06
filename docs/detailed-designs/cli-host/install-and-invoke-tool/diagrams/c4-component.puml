@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Install and invoke the tool
+
+Container_Boundary(exe, "primer executable") {
+  Component(program, "Program", "Entry point", "Builds the host, dispatches, returns the exit code")
+  Component(hostbuilder, "PrimerHostBuilder", "Composition root", "Registers configuration, logging, and services")
+  Component(version, "VersionHandler", "Command handler", "Writes the informational version")
+  Component(meta, "BuildMetadata", "Generated static type", "Exposes InformationalVersion and CommitSha")
+  Component(exit, "ExitCode", "Enumeration", "Defines the five process outcomes")
+  Component(formatter, "IOutputFormatter", "Abstraction", "Renders text or JSON output")
+}
+
+Rel(program, hostbuilder, "Builds the host with")
+Rel(program, version, "Dispatches to")
+Rel(version, meta, "Reads compiled-in constants from")
+Rel(version, formatter, "Writes through")
+Rel(program, exit, "Returns")
+@enduml

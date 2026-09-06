@@ -1,0 +1,109 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Generate AGENTS.md
+
+interface IAgentsFileGenerator {
+  +Generate(context: RepositoryContext): IReadOnlyList<GeneratedFile>
+}
+
+class AgentsFileGenerator {
+  +Generate(context: RepositoryContext): IReadOnlyList<GeneratedFile>
+}
+
+interface ISection {
+  +Order: int
+  +Heading: string
+  +HasContent(context: RepositoryContext): bool
+  +Render(context: RepositoryContext): string
+}
+
+class OverviewSection
+class CommandsSection
+class StructureSection
+class TestingSection
+class CodeStyleSection
+class GitWorkflowSection
+class BoundariesSection {
+  +Render(context: RepositoryContext): string
+  -GeneratedPaths(): IReadOnlyList<string>
+}
+
+class SectionComposer {
+  -sections: IEnumerable<ISection>
+  +Compose(context: RepositoryContext): string
+}
+
+class GroundingValidator {
+  +Validate(draft: string, context: RepositoryContext): string
+  -PathExists(relativePath: string): bool
+  -IsBareToolName(invocation: string): bool
+}
+
+class UntrustedContentFence {
+  +Fence(text: string): string
+  -EscapeDelimiters(text: string): string
+}
+
+class LineBudget {
+  +MaxLines: int = 150
+  +Apply(draft: string): string
+}
+
+class ManagedRegion {
+  +{static} Begin: string = "<!-- primer:begin -->"
+  +{static} End: string = "<!-- primer:end -->"
+  +Wrap(body: string, version: string, hash: string): string
+  +{static} TryParse(content: string, out region: ManagedRegion): bool
+}
+
+class ContentHash {
+  +{static} Compute(context: RepositoryContext): string
+}
+
+class NestedProjectPlanner {
+  +Plan(context: RepositoryContext): IReadOnlyList<string>
+}
+
+class GeneratedFile {
+  +RelativePath: string
+  +Content: string
+  +Action: FileAction
+}
+
+enum FileAction {
+  Create
+  Update
+  Unchanged
+}
+
+IAgentsFileGenerator <|.. AgentsFileGenerator
+ISection <|.. OverviewSection
+ISection <|.. CommandsSection
+ISection <|.. StructureSection
+ISection <|.. TestingSection
+ISection <|.. CodeStyleSection
+ISection <|.. GitWorkflowSection
+ISection <|.. BoundariesSection
+
+AgentsFileGenerator --> SectionComposer : composes with
+AgentsFileGenerator ..> GroundingValidator : validates with
+AgentsFileGenerator ..> LineBudget : trims with
+AgentsFileGenerator ..> ManagedRegion : wraps with
+AgentsFileGenerator ..> NestedProjectPlanner : plans with
+AgentsFileGenerator --> GeneratedFile : produces
+SectionComposer o-- "*" ISection : orders
+ISection ..> UntrustedContentFence : fences through
+ManagedRegion ..> ContentHash : records
+GeneratedFile --> FileAction : declares
+@enduml

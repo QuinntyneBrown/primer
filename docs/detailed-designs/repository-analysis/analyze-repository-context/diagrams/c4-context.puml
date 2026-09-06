@@ -1,0 +1,19 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Analyse the repository context
+
+Person(dev, "Developer", "Runs a command that requires repository facts")
+System(primer, "Primer", "CLI that derives repository facts by reading files only")
+System_Ext(repo, "Source repository", "Working tree holding markers, conventions, and workflows")
+
+Rel(dev, primer, "Invokes", "primer init")
+Rel(primer, repo, "Reads files from", "no process is started")
+Rel(primer, dev, "Reports warnings for unreadable paths to", "stderr")
+
+note right of primer
+  Analysis contacts no network and
+  executes no repository-supplied
+  code, per L2-049.
+end note
+@enduml

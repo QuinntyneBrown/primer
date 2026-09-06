@@ -1,0 +1,92 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Write files safely
+
+class WritePlan {
+  +Entries: IReadOnlyList<GeneratedFile>
+  +HasChanges: bool
+}
+
+class GeneratedFile {
+  +RelativePath: string
+  +Content: string
+  +Action: FileAction
+}
+
+enum FileAction {
+  Create
+  Update
+  Unchanged
+}
+
+class OverwritePolicy {
+  +Decide(existing: string, generated: GeneratedFile, force: bool): FileAction
+}
+
+class ManagedRegionMerger {
+  +Merge(existing: string, body: string): string
+  -Validate(existing: string): void
+}
+
+interface IDryRunReporter {
+  +Report(plan: WritePlan): void
+}
+class DryRunReporter {
+  +Report(plan: WritePlan): void
+  -Diff(existing: string, generated: string): string
+}
+
+interface IFileWriter {
+  +Apply(plan: WritePlan): IReadOnlyList<FileAction>
+}
+class AtomicFileWriter {
+  +Apply(plan: WritePlan): IReadOnlyList<FileAction>
+  -WriteThroughTemporary(path: string, content: string): void
+}
+
+class BackupWriter {
+  +Backup(path: string): string
+}
+
+class LineEndingPolicy {
+  +Resolve(root: RepositoryRoot): string
+}
+
+class EncodingPolicy {
+  +{static} Encoding: Encoding
+  +Normalize(content: string): string
+}
+
+class FilePermissions {
+  +Apply(path: string): void
+}
+
+class MalformedRegionError {
+  +Path: string
+}
+
+IDryRunReporter <|.. DryRunReporter
+IFileWriter <|.. AtomicFileWriter
+WritePlan o-- "*" GeneratedFile : holds
+GeneratedFile --> FileAction : declares
+OverwritePolicy ..> WritePlan : sets actions on
+OverwritePolicy --> ManagedRegionMerger : merges through
+ManagedRegionMerger ..> MalformedRegionError : raises
+DryRunReporter ..> WritePlan : renders
+AtomicFileWriter ..> WritePlan : applies
+AtomicFileWriter --> BackupWriter : backs up through
+AtomicFileWriter --> LineEndingPolicy : applies
+AtomicFileWriter --> EncodingPolicy : applies
+AtomicFileWriter --> FilePermissions : applies
+@enduml

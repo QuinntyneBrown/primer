@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Write files safely
+
+Person(dev, "Developer", "Previews and applies changes")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Builds a write plan and applies it atomically")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(targets, "Target files", "AGENTS.md and pointer files", "Carry generated and human-authored content")
+  ContainerDb(backups, "Backups", "Timestamped copies", "Written before any forced overwrite")
+  ContainerDb(declarations, "Line-ending declarations", "gitattributes and editorconfig", "Fix the line ending to use")
+}
+
+Rel(dev, exe, "Invokes")
+Rel(exe, declarations, "Resolves the line ending from")
+Rel(exe, targets, "Writes atomically into", "L2-026")
+Rel(exe, backups, "Writes prior content into before forcing", "L2-024")
+@enduml

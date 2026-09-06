@@ -1,0 +1,26 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Write files safely
+
+Container_Boundary(exe, "primer executable") {
+  Component(plan, "WritePlan", "Record set", "Every target with the action it shall take")
+  Component(policy, "OverwritePolicy", "Decision", "Chooses merge, refuse, or forced overwrite")
+  Component(merger, "ManagedRegionMerger", "Merge", "Replaces the delimited block, preserving the surround")
+  Component(dryrun, "DryRunReporter", "IDryRunReporter", "Prints intended content or a unified diff")
+  Component(writer, "AtomicFileWriter", "IFileWriter", "Writes through a temporary file, then replaces")
+  Component(backup, "BackupWriter", "Guard", "Copies prior content before a forced overwrite")
+  Component(lineendings, "LineEndingPolicy", "Policy", "Resolves the declared line ending, defaulting to LF")
+  Component(encoding, "EncodingPolicy", "Policy", "Fixes UTF-8 without a BOM and one trailing newline")
+  Component(permissions, "FilePermissions", "Policy", "Creates at mode 0644 on POSIX hosts")
+}
+
+Rel(policy, plan, "Sets the action on")
+Rel(policy, merger, "Merges through when a region is present")
+Rel(dryrun, plan, "Renders")
+Rel(writer, plan, "Applies")
+Rel(writer, backup, "Backs up through before forcing")
+Rel(writer, lineendings, "Applies")
+Rel(writer, encoding, "Applies")
+Rel(writer, permissions, "Applies")
+@enduml

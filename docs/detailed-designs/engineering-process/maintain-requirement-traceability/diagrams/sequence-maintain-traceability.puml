@@ -1,0 +1,75 @@
+@startuml
+title UML sequence behaviour - Gate a pull request on traceability
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Contributor" as contributor
+box "Frontend - Pull request" #E0F2FE
+  participant "CI runner" as runner
+end box
+box "Backend - Quality gates" #D1FADF
+  participant "ci.yml workflow" as workflow
+end box
+box "Backend - Traceability check" #ECFDF3
+  participant "SpecCatalog" as catalog
+  participant "TraceCommentScanner" as scanner
+  participant "TraceabilityTests" as tests
+end box
+box "Backend - Infrastructure" #FFF4E5
+  participant "TemporaryRepository" as temprepo
+  database "Primer repository" as repo
+end box
+
+contributor -> repo : Add an L2 criterion and its failing test
+repo -> runner : Trigger the pull-request build
+runner -> workflow : Run every L2-045 gate
+
+workflow -> temprepo : Run the integration suite
+loop For each integration test
+  temprepo -> temprepo : Create a per-test git repository
+  temprepo -> temprepo : Run the L2-042 arrange, act, and assert sections
+  temprepo -> temprepo : Delete the temporary repository
+end
+note right of temprepo
+  L2-044 requires no network, tolerates
+  parallel execution, and leaves the
+  developer's own configuration untouched.
+end note
+temprepo --> workflow : Suite result
+
+workflow -> tests : Run the traceability assertions
+tests -> catalog : Load L1 and L2 requirements
+catalog -> repo : Read docs/specs
+repo --> catalog : Requirement identifiers and parents
+catalog --> tests : RequirementRecord per requirement
+
+tests -> scanner : Scan the test project for trace comments
+scanner -> repo : Read each test file header
+repo --> scanner : Referenced identifiers per file
+scanner --> tests : Referenced identifier map
+
+alt Both directions hold
+  tests --> workflow : L2-043 traceability complete
+else An L2 is uncovered or an identifier does not exist
+  tests --> workflow : Failure listing the offending identifiers
+end
+
+alt Every gate passed
+  workflow -> workflow : Retain the packaged artefact
+  workflow --> runner : Pull request may merge
+else Any gate failed
+  workflow --> runner : Pull request fails
+end
+runner --> contributor : Report the failing step
+@enduml

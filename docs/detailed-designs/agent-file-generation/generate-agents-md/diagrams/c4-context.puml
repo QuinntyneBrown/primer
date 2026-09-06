@@ -1,0 +1,14 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Generate AGENTS.md
+
+Person(dev, "Developer", "Runs primer init against a repository")
+Person_Ext(agent, "Coding agent", "Reads AGENTS.md before working in the repository")
+System(primer, "Primer", "CLI that generates grounded agent guidance")
+System_Ext(repo, "Source repository", "Supplies the facts and receives the file")
+
+Rel(dev, primer, "Invokes", "primer init")
+Rel(primer, repo, "Reads facts from and writes AGENTS.md into")
+Rel(agent, repo, "Reads AGENTS.md from")
+@enduml

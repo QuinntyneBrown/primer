@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Present output and diagnostics
+
+Person(dev, "Developer", "Reads the terminal")
+System_Ext(script, "Script or CI job", "Parses the result stream")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Renders results, logs, and errors")
+  ContainerQueue(stdout, "stdout", "Standard output stream", "Carries command results only")
+  ContainerQueue(stderr, "stderr", "Standard error stream", "Carries logs, warnings, and errors")
+}
+
+Rel(exe, stdout, "Writes results to")
+Rel(exe, stderr, "Writes diagnostics to")
+Rel(stdout, script, "Parsed by")
+Rel(stdout, dev, "Read by")
+Rel(stderr, dev, "Read by")
+@enduml

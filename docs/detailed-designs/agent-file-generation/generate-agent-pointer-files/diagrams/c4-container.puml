@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Generate agent pointer files
+
+Person(dev, "Developer", "Selects the agents to support")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Resolves targets and emits pointer files")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(agentsmd, "AGENTS.md", "Markdown file", "The single source of guidance")
+  ContainerDb(claudemd, "CLAUDE.md", "Markdown file", "Carries only the import directive")
+  ContainerDb(geminimd, "GEMINI.md", "Markdown file", "Directs the agent to AGENTS.md")
+  ContainerDb(copilotmd, ".github/copilot-instructions.md", "Markdown file", "Directs the agent to AGENTS.md")
+}
+
+Rel(dev, exe, "Invokes with --agent values")
+Rel(exe, agentsmd, "Reads the target of every pointer")
+Rel(exe, claudemd, "Emits with an Import mechanism")
+Rel(exe, geminimd, "Emits with an Instruction mechanism")
+Rel(exe, copilotmd, "Emits with an Instruction mechanism, creating .github as needed")
+Rel(claudemd, agentsmd, "Resolves into context at load time", "@AGENTS.md")
+@enduml

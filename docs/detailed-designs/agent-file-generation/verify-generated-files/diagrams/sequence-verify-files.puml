@@ -1,0 +1,73 @@
+@startuml
+title UML sequence behaviour - Regenerate and compare
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Continuous integration" as ci
+box "Frontend - Pipeline step" #E0F2FE
+  participant "CI runner" as runner
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "CheckCommand" as command
+  participant "CheckHandler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "RepositoryAnalyzer" as analyzer
+  participant "AgentsFileGenerator" as generator
+  participant "DriftChecker" as checker
+  participant "CheckResultPresenter" as presenter
+end box
+box "Backend - Infrastructure" #FFF4E5
+  database "Working tree" as tree
+end box
+
+ci -> runner : Run the guidance check
+runner -> command : primer check
+command -> handler : Dispatch
+
+handler -> analyzer : Derive the current repository context
+analyzer -> tree : Read facts
+tree --> analyzer : Marker, convention, and workflow content
+analyzer --> handler : RepositoryContext
+
+handler -> generator : Produce the expected content in memory
+generator --> handler : GeneratedFile per target
+note right of generator
+  The same generator services serve
+  primer init, so the two commands
+  cannot disagree on correctness.
+end note
+
+handler -> checker : Compare expected content against disk
+loop For each target
+  checker -> tree : Read the committed file
+  tree --> checker : Content or absence
+  checker -> checker : Classify as Current, Divergent, or Missing
+end
+checker --> handler : DriftReport
+
+handler -> presenter : Render the report
+presenter --> runner : Divergent and missing paths
+
+alt No drift is found
+  handler --> runner : ExitCode.Success
+else Any target has drifted or is missing
+  handler --> runner : L2-027 ExitCode.Verification
+end
+note right of handler
+  No file is created, modified, or
+  deleted under any outcome.
+end note
+runner --> ci : Step result
+@enduml

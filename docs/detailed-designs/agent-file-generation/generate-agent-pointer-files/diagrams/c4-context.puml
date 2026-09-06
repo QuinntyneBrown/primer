@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Generate agent pointer files
+
+Person(dev, "Developer", "Selects the agents to support")
+Person_Ext(claude, "Claude Code", "Reads CLAUDE.md and resolves its import")
+Person_Ext(codex, "Codex", "Reads AGENTS.md natively")
+Person_Ext(gemini, "Gemini", "Reads GEMINI.md")
+Person_Ext(copilot, "Copilot", "Reads .github/copilot-instructions.md")
+System(primer, "Primer", "CLI that writes one pointer file per selected agent")
+System_Ext(repo, "Source repository", "Holds AGENTS.md and every pointer file")
+
+Rel(dev, primer, "Invokes", "primer init --agent all")
+Rel(primer, repo, "Writes pointer files into")
+Rel(claude, repo, "Reads CLAUDE.md from")
+Rel(codex, repo, "Reads AGENTS.md from")
+Rel(gemini, repo, "Reads GEMINI.md from")
+Rel(copilot, repo, "Reads copilot-instructions.md from")
+@enduml

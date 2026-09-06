@@ -1,0 +1,74 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Resolve configuration
+
+class PrimerOptions {
+  +Budget: AnalysisBudget
+  +Agents: IReadOnlyList<AgentTarget>
+  +TemplatePath: string
+  +McpRequirements: IReadOnlyList<McpRequirement>
+}
+
+class AnalysisBudget {
+  +MaxDepth: int = 4
+  +MaxFileCount: int = 50000
+  +MaxFileBytes: long = 1048576
+  +NetworkTimeout: TimeSpan
+}
+
+interface "IValidateOptions<PrimerOptions>" as IValidate {
+  +Validate(name: string, options: PrimerOptions): ValidateOptionsResult
+}
+
+class PrimerOptionsValidator {
+  +Validate(name: string, options: PrimerOptions): ValidateOptionsResult
+}
+
+class PrimerHostBuilder {
+  +Build(args: string[]): IHost
+  -AddConfiguration(): void
+  -AddServices(): void
+}
+
+class ConfigurationSourceOrder {
+  +Apply(builder: IConfigurationBuilder, args: string[]): void
+}
+
+interface ITemplateLocator {
+  +Locate(name: string): TemplateSource
+}
+
+class TemplateLocator {
+  +Locate(name: string): TemplateSource
+}
+
+class TemplateSource {
+  +Name: string
+  +Content: string
+  +IsOverride: bool
+}
+
+class EffectiveSettingsReporter {
+  +Report(options: PrimerOptions): void
+}
+
+IValidate <|.. PrimerOptionsValidator
+ITemplateLocator <|.. TemplateLocator
+PrimerOptions *-- AnalysisBudget : owns
+PrimerHostBuilder ..> ConfigurationSourceOrder : applies
+PrimerHostBuilder ..> PrimerOptions : binds
+PrimerOptionsValidator ..> PrimerOptions : validates
+TemplateLocator --> TemplateSource : returns
+EffectiveSettingsReporter ..> PrimerOptions : reads
+@enduml

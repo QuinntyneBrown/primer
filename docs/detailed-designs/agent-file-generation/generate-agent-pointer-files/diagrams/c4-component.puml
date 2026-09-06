@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Generate agent pointer files
+
+Container_Boundary(exe, "primer executable") {
+  Component(selection, "AgentSelection", "Parsed option", "De-duplicates values and expands all")
+  Component(registry, "AgentTargetRegistry", "Lookup", "Resolves a name to a target, case-insensitively")
+  Component(target, "AgentTarget", "Record", "Identifier, conventional path, and mechanism")
+  Component(mechanism, "PointerMechanism", "Enumeration", "Native, Import, or Instruction")
+  Component(generator, "PointerFileGenerator", "IPointerFileGenerator", "Emits per the target mechanism")
+  Component(error, "UnsupportedAgentError", "Typed failure", "Carries the rejected and supported values")
+  Component(file, "GeneratedFile", "Record", "Target path, content, and intended action")
+}
+
+Rel(selection, registry, "Resolves each value through")
+Rel(registry, target, "Returns")
+Rel(registry, error, "Raises on an unsupported value")
+Rel(target, mechanism, "Declares")
+Rel(generator, target, "Emits according to")
+Rel(generator, file, "Produces")
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Install and invoke the tool
+
+Person(dev, "Developer", "Installs and runs Primer")
+System_Ext(feed, "NuGet feed", "Distributes the Primer package")
+
+System_Boundary(primer, "Primer") {
+  Container(pkg, "Primer package", "NuGet DotnetTool package", "Carries the executable and the pack-time tool metadata")
+  Container(exe, "primer executable", ".NET console application", "Parses the command line and runs the requested command")
+  ContainerDb(store, "Tool store", "File system", "Holds the installed tool and its manifest entry")
+}
+
+Rel(dev, feed, "Requests the package from", "dotnet tool install")
+Rel(feed, pkg, "Supplies")
+Rel(pkg, store, "Is unpacked into")
+Rel(store, exe, "Provides the shim that launches")
+Rel(dev, exe, "Invokes", "primer --version")
+@enduml

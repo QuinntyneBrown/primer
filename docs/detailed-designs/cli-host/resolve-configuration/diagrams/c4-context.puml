@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Resolve configuration
+
+Person(dev, "Developer", "Supplies options on the command line and in the environment")
+System(primer, "Primer", "CLI that resolves settings from four sources in precedence order")
+System_Ext(repo, "Source repository", "Holds primer.json and any template override")
+System_Ext(env, "Shell environment", "Supplies PRIMER_ prefixed variables")
+
+Rel(dev, primer, "Passes arguments to", "highest precedence")
+Rel(env, primer, "Supplies variables to")
+Rel(repo, primer, "Supplies primer.json and templates to")
+Rel(primer, dev, "Reports a configuration failure to", "stderr, exit 3")
+@enduml

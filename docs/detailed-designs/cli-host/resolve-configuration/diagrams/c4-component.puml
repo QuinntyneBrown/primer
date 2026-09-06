@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Resolve configuration
+
+Container_Boundary(exe, "primer executable") {
+  Component(hostbuilder, "PrimerHostBuilder", "Composition root", "Registers sources, options, and services")
+  Component(order, "ConfigurationSourceOrder", "Source registration", "Applies the L2-034 precedence order")
+  Component(options, "PrimerOptions", "Options root", "Carries budget, targets, templates, MCP requirements")
+  Component(validator, "PrimerOptionsValidator", "IValidateOptions", "Fails with the offending key before any file access")
+  Component(reporter, "EffectiveSettingsReporter", "Diagnostics", "Writes each value and its source at Diagnostic verbosity")
+  Component(locator, "TemplateLocator", "Resolver", "Prefers a repository override over the embedded default")
+  Component(container, "Service container", "Microsoft.Extensions.DependencyInjection", "Resolves every command handler")
+}
+
+Rel(hostbuilder, order, "Registers sources through")
+Rel(order, options, "Binds into")
+Rel(hostbuilder, validator, "Registers")
+Rel(validator, options, "Validates")
+Rel(hostbuilder, container, "Builds and validates")
+Rel(container, locator, "Resolves")
+Rel(reporter, options, "Reads the effective values from")
+@enduml

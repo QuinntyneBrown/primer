@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Analyse the repository context
+
+Person(dev, "Developer", "Runs the command")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Derives and holds the repository context in memory")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(markers, "Marker files", "sln, csproj, package.json, go.mod", "Identify the technology in use")
+  ContainerDb(ignore, "Ignore rules", ".gitignore", "Exclude paths from listing and reading")
+  ContainerDb(conventions, "Convention files", "editorconfig, Directory.Build.props", "Declare formatting and build settings")
+  ContainerDb(workflows, "Workflow definitions", ".github/workflows", "State the commands that actually run")
+}
+
+Rel(dev, exe, "Invokes")
+Rel(exe, markers, "Reads to detect stacks", "L2-008")
+Rel(exe, ignore, "Reads to exclude paths", "L2-010")
+Rel(exe, conventions, "Reads to reuse declared settings", "L2-011")
+Rel(exe, workflows, "Reads in preference to inference", "L2-009")
+@enduml

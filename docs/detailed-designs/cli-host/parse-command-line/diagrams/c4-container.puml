@@ -1,0 +1,19 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Parse the command line
+
+Person(dev, "Developer", "Types Primer commands")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Parses the command line and dispatches the requested command")
+  ContainerDb(cfg, "Configuration sources", "JSON files and environment", "Supply option defaults below the command line")
+}
+
+System_Ext(repo, "Source repository", "Git working tree")
+
+Rel(dev, exe, "Invokes", "argv")
+Rel(exe, cfg, "Reads option defaults from")
+Rel(exe, repo, "Reads and writes, once a command is dispatched")
+Rel(exe, dev, "Writes help and errors to", "stdout and stderr")
+@enduml

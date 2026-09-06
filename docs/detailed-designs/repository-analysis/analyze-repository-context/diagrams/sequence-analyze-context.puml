@@ -1,0 +1,77 @@
+@startuml
+title UML sequence behaviour - Derive the repository context
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "InitCommandHandler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "RepositoryAnalyzer" as analyzer
+  participant "IStackDetector set" as detectors
+  participant "ICommandInferrer set" as inferrers
+  participant "BoundedStructureScanner" as scanner
+  participant "PatternSecretRedactor" as redactor
+end box
+box "Backend - Infrastructure" #FFF4E5
+  participant "FileProbe" as probe
+  database "Working tree" as tree
+end box
+
+dev -> shell : primer init
+shell -> handler : Invoke with the resolved root
+handler -> analyzer : Analyse the repository
+
+analyzer -> detectors : Detect stacks from marker files
+detectors -> tree : Read L2-008 marker files
+tree --> detectors : Marker content
+detectors --> analyzer : Every matching StackDescriptor
+
+analyzer -> inferrers : Infer build, test, and lint commands
+inferrers -> tree : Read workflows, then the solution, then package scripts
+tree --> inferrers : Declared command text
+note right of inferrers
+  A workflow command is preferred over
+  an inferred one per L2-009, and a
+  lifecycle script is read as data, never
+  executed, per L2-049.
+end note
+inferrers --> analyzer : InferredCommand per role
+
+analyzer -> scanner : Scan the structure within the budget
+loop Until the depth or file-count cap is reached
+  scanner -> scanner : Skip paths excluded by L2-010 ignore rules
+  scanner -> probe : Probe size, binary kind, and readability
+  probe --> scanner : FileFacts
+  alt The file is within the read cap, textual, and readable
+    scanner -> tree : Read the content
+    tree --> scanner : Text
+  else The file exceeds the L2-053 read cap or is binary
+    scanner -> scanner : Record name and size only
+  else The file is unreadable
+    scanner -> scanner : Warn and continue
+  end
+end
+scanner --> analyzer : StructureSummary
+
+analyzer -> redactor : Filter every retained value
+redactor --> analyzer : Values with L2-047 credential matches removed
+analyzer --> handler : RepositoryContext
+handler --> shell : Context ready for generation
+shell --> dev : Present progress within the L2-052 time budget
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Parse the command line
+
+Container_Boundary(exe, "primer executable") {
+  Component(factory, "RootCommandFactory", "Composition", "Attaches global options and adds one command per module")
+  Component(globals, "GlobalOptions", "Static definitions", "Defines the six options shared by every command")
+  Component(init, "InitCommand", "ICommandModule", "Defines the init command")
+  Component(check, "CheckCommand", "ICommandModule", "Defines the check command")
+  Component(mcp, "McpCommand", "ICommandModule", "Defines the mcp command and its subcommands")
+  Component(pipeline, "InvocationPipeline", "Middleware", "Resolves handlers and maps outcomes to exit codes")
+  Component(parseerr, "ParseErrorHandler", "Error renderer", "Writes the suggestion and returns Usage")
+  Component(exit, "ExitCode", "Enumeration", "Defines the five process outcomes")
+}
+
+Rel(factory, globals, "Attaches to the root")
+Rel(factory, init, "Adds the command built by")
+Rel(factory, check, "Adds the command built by")
+Rel(factory, mcp, "Adds the command built by")
+Rel(factory, pipeline, "Is invoked through")
+Rel(pipeline, parseerr, "Delegates a parse failure to")
+Rel(pipeline, exit, "Returns")
+Rel(parseerr, exit, "Returns Usage")
+@enduml

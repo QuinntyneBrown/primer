@@ -1,0 +1,16 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Parse the command line
+
+Person(dev, "Developer", "Types Primer commands in a shell")
+System_Ext(ci, "Continuous integration", "Invokes Primer and branches on the exit code")
+System(primer, "Primer", "CLI that parses the command line and dispatches a command")
+System_Ext(repo, "Source repository", "Git working tree the command later targets")
+
+Rel(dev, primer, "Invokes", "primer <command> [options]")
+Rel(ci, primer, "Invokes non-interactively", "primer check")
+Rel(primer, dev, "Returns help, errors, and an exit code")
+Rel(primer, ci, "Returns an exit code per the L2-004 contract")
+Rel(primer, repo, "Targets, once a command is dispatched")
+@enduml

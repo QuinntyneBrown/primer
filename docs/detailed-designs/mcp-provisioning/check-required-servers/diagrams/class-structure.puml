@@ -1,0 +1,92 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Check required MCP servers
+
+class McpRequirement {
+  +Name: string
+  +VersionRange: string
+  +InstallMethod: string
+  +SourceUrl: Uri
+  +ExpectedChecksum: string
+}
+
+interface IMcpRequirementSource {
+  +GetRequirements(): IReadOnlyList<McpRequirement>
+}
+class ConfigurationMcpRequirementSource
+
+interface IMcpClientProbe {
+  +ClientName: string
+  +Probe(): ClientProbeResult
+}
+class ClaudeCodeClientProbe
+class CodexClientProbe
+
+class ClientProbeResult {
+  +ClientName: string
+  +ConfigurationPath: string
+  +IsConfigured: bool
+  +RegisteredServers: IReadOnlyList<RegisteredServer>
+}
+
+class RegisteredServer {
+  +Name: string
+  +Version: string
+}
+
+class McpGapAnalyzer {
+  +Analyze(requirements: IReadOnlyList<McpRequirement>, probes: IReadOnlyList<ClientProbeResult>): McpGapReport
+}
+
+class McpGapReport {
+  +Entries: IReadOnlyList<McpGapEntry>
+  +HasGap: bool
+}
+
+class McpGapEntry {
+  +Requirement: McpRequirement
+  +Status: McpServerStatus
+  +FoundIn: string
+  +RemediationCommand: string
+}
+
+enum McpServerStatus {
+  Installed
+  Outdated
+  Missing
+  Unknown
+}
+
+class RemediationCommandBuilder {
+  +Build(requirement: McpRequirement): string
+}
+
+class MalformedClientConfigError {
+  +ConfigurationPath: string
+}
+
+IMcpRequirementSource <|.. ConfigurationMcpRequirementSource
+IMcpClientProbe <|.. ClaudeCodeClientProbe
+IMcpClientProbe <|.. CodexClientProbe
+IMcpRequirementSource --> McpRequirement : produces
+IMcpClientProbe --> ClientProbeResult : produces
+IMcpClientProbe ..> MalformedClientConfigError : raises
+ClientProbeResult o-- "*" RegisteredServer : lists
+McpGapAnalyzer ..> McpRequirement : compares
+McpGapAnalyzer ..> ClientProbeResult : against
+McpGapAnalyzer --> McpGapReport : produces
+McpGapReport o-- "*" McpGapEntry : lists
+McpGapEntry --> McpServerStatus : declares
+McpGapEntry ..> RemediationCommandBuilder : named by
+@enduml

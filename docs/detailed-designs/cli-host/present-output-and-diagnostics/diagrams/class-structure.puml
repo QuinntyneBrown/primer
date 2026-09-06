@@ -1,0 +1,86 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Present output and diagnostics
+
+interface ITerminalCapabilities {
+  +Width: int
+  +SupportsColor: bool
+  +SupportsUnicode: bool
+  +IsInteractive: bool
+}
+
+class TerminalCapabilities {
+  +{static} Detect(): ITerminalCapabilities
+}
+
+interface IPrimerConsole {
+  +WriteResult(payload: object): void
+  +WriteDiagnostic(text: string): void
+}
+
+class PrimerConsole {
+  -capabilities: ITerminalCapabilities
+  -formatter: IOutputFormatter
+  +WriteResult(payload: object): void
+  +WriteDiagnostic(text: string): void
+}
+
+interface IOutputFormatter {
+  +Render(payload: object): string
+}
+
+class TextOutputFormatter {
+  +Render(payload: object): string
+  -Wrap(text: string, width: int): string
+}
+
+class JsonOutputFormatter {
+  +Render(payload: object): string
+}
+
+class OutputEnvelope {
+  +SchemaVersion: string
+  +Payload: object
+  +Error: string
+  +ExitCode: int
+}
+
+class PathElider {
+  +Elide(path: string, budget: int): string
+}
+
+class ErrorPresenter {
+  +Present(error: PrimerError, verbosity: VerbosityLevel): void
+}
+
+class StderrLoggerProvider {
+  +CreateLogger(category: string): ILogger
+}
+
+class ConsentPrompt {
+  +Confirm(question: string): bool
+}
+
+ITerminalCapabilities <|.. TerminalCapabilities
+IPrimerConsole <|.. PrimerConsole
+IOutputFormatter <|.. TextOutputFormatter
+IOutputFormatter <|.. JsonOutputFormatter
+PrimerConsole --> ITerminalCapabilities : applies
+PrimerConsole --> IOutputFormatter : renders through
+JsonOutputFormatter --> OutputEnvelope : emits
+TextOutputFormatter ..> PathElider : shortens with
+ErrorPresenter --> IPrimerConsole : writes through
+StderrLoggerProvider --> IPrimerConsole : writes through
+ConsentPrompt --> ITerminalCapabilities : checks
+@enduml

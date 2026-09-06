@@ -1,0 +1,25 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Install missing MCP servers
+
+Person(dev, "Developer", "Approves the plan")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Plans, verifies, and applies installation")
+}
+
+System_Boundary(machine, "Developer machine") {
+  ContainerDb(clientcfg, "Client configuration", "JSON file", "Registry of MCP servers the client launches")
+  ContainerDb(backups, "Configuration backups", "Timestamped copies", "Written before any change")
+  ContainerDb(installed, "Installed components", "File system", "The MCP server artefacts themselves")
+}
+
+System_Ext(distribution, "MCP distribution source", "Supplies pinned artefacts")
+
+Rel(dev, exe, "Approves the displayed plan")
+Rel(exe, distribution, "Downloads a pinned artefact from", "HTTPS")
+Rel(exe, backups, "Writes prior configuration into")
+Rel(exe, clientcfg, "Edits surgically", "L2-032")
+Rel(exe, installed, "Places verified artefacts into")
+@enduml

@@ -1,0 +1,101 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Install missing MCP servers
+
+class McpInstallCommand {
+  +Build(): Command
+}
+
+interface IMcpInstaller {
+  +Install(report: McpGapReport, options: InstallOptions): Task<ExitCode>
+}
+class McpInstaller
+
+class InstallPlan {
+  +Actions: IReadOnlyList<InstallAction>
+  +IsEmpty: bool
+}
+
+class InstallAction {
+  +Requirement: McpRequirement
+  +Operation: InstallOperation
+  +TargetConfigurationPath: string
+}
+
+enum InstallOperation {
+  Install
+  Upgrade
+  AlreadySatisfied
+}
+
+interface IConsentGate {
+  +TryObtain(plan: InstallPlan, options: InstallOptions): bool
+}
+class ConsentGate {
+  +TryObtain(plan: InstallPlan, options: InstallOptions): bool
+}
+
+interface IArtifactVerifier {
+  +Verify(requirement: McpRequirement): VerifiedArtifact
+}
+class ArtifactVerifier {
+  -EnsureHttps(source: Uri): void
+  -EnsureNoCrossHostRedirect(response: HttpResponseMessage): void
+  -EnsureChecksum(bytes: byte[], expected: string): void
+}
+
+class VerifiedArtifact {
+  +Path: string
+  +PinnedVersion: string
+  +Checksum: string
+}
+
+class ClientConfigEditor {
+  +Apply(plan: InstallPlan): void
+  -PreserveUnrelatedEntries(document: JsonNode): void
+}
+
+class BackupWriter {
+  +Backup(path: string): string
+}
+
+class InsecureSourceError {
+  +Source: Uri
+}
+class ChecksumMismatchError {
+  +Expected: string
+  +Actual: string
+}
+class RedirectRefusedError {
+  +DeclaredHost: string
+  +RedirectHost: string
+}
+
+IMcpInstaller <|.. McpInstaller
+IConsentGate <|.. ConsentGate
+IArtifactVerifier <|.. ArtifactVerifier
+
+McpInstallCommand ..> IMcpInstaller : dispatches to
+McpInstaller --> InstallPlan : builds
+McpInstaller --> IConsentGate : gated by
+McpInstaller --> IArtifactVerifier : verifies with
+McpInstaller --> BackupWriter : backs up through
+McpInstaller --> ClientConfigEditor : applies with
+InstallPlan o-- "*" InstallAction : holds
+InstallAction --> InstallOperation : declares
+ArtifactVerifier --> VerifiedArtifact : returns
+ArtifactVerifier ..> InsecureSourceError : raises
+ArtifactVerifier ..> ChecksumMismatchError : raises
+ArtifactVerifier ..> RedirectRefusedError : raises
+@enduml

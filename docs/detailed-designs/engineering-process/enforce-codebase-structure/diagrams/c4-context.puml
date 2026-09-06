@@ -1,0 +1,16 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Enforce codebase structure
+
+Person(contributor, "Contributor", "Changes the Primer codebase")
+System(build, "Primer build", "Compiles, formats, and asserts the structural rules")
+System_Ext(ci, "Continuous integration", "Runs the same build on every pull request")
+System_Ext(repo, "Primer repository", "Holds the source, tests, and build settings")
+
+Rel(contributor, repo, "Commits a change to")
+Rel(contributor, build, "Runs locally")
+Rel(ci, build, "Runs on every pull request")
+Rel(build, repo, "Asserts the structural rules over")
+Rel(build, contributor, "Reports the specific rule that failed")
+@enduml

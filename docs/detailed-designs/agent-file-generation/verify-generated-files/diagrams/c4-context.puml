@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Verify generated files
+
+Person(dev, "Developer", "Checks guidance before committing")
+System_Ext(ci, "Continuous integration", "Fails the build when guidance has drifted")
+System(primer, "Primer", "CLI that regenerates in memory and compares against disk")
+System_Ext(repo, "Source repository", "Holds the committed generated files")
+
+Rel(dev, primer, "Invokes", "primer check")
+Rel(ci, primer, "Invokes as a pipeline step", "primer check")
+Rel(primer, repo, "Reads facts and committed files from", "writes nothing")
+Rel(primer, ci, "Returns exit 4 on drift, per L2-027")
+@enduml

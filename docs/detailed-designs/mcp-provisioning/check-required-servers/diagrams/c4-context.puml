@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Check required MCP servers
+
+Person(dev, "Developer", "Checks whether required MCP components are present")
+System(primer, "Primer", "CLI that compares declared requirements against installed servers")
+System_Ext(repo, "Source repository", "Declares the requirement manifest")
+System_Ext(clients, "Agent clients", "Hold the registries of MCP servers they launch")
+System_Ext(registry, "MCP distribution source", "Supplies version facts when reachable")
+
+Rel(dev, primer, "Invokes", "primer mcp check")
+Rel(primer, repo, "Reads the requirement manifest from")
+Rel(primer, clients, "Reads registered servers from", "read only")
+Rel(primer, registry, "Queries version facts from when reachable", "HTTPS")
+Rel(primer, dev, "Reports the gap and remediation commands to")
+@enduml

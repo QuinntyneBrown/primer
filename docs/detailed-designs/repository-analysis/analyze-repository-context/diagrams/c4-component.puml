@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Analyse the repository context
+
+Container_Boundary(exe, "primer executable") {
+  Component(analyzer, "RepositoryAnalyzer", "IRepositoryAnalyzer", "Orchestrates the pass and assembles the context")
+  Component(detectors, "IStackDetector set", "Strategy set", "Dotnet, Node, Python, and Go detectors")
+  Component(inferrers, "ICommandInferrer set", "Ordered strategies", "Workflow, solution, and package-script inference")
+  Component(scanner, "BoundedStructureScanner", "IStructureScanner", "Walks the tree within the analysis budget")
+  Component(ignore, "GitIgnoreMatcher", "IIgnoreMatcher", "Evaluates ignore rules before listing or reading")
+  Component(conventions, "ConventionDetector", "IConventionDetector", "Records the declared convention sources")
+  Component(probe, "FileProbe", "Guard", "Reports size and binary kind before any read")
+  Component(redactor, "PatternSecretRedactor", "ISecretRedactor", "Excludes credential-shaped values")
+  Component(budget, "AnalysisBudget", "Configuration", "Caps depth, file count, and read size")
+  Component(context, "RepositoryContext", "Record", "The single input generation consumes")
+}
+
+Rel(analyzer, detectors, "Collects stacks from")
+Rel(analyzer, inferrers, "Collects commands from")
+Rel(analyzer, scanner, "Collects structure from")
+Rel(analyzer, conventions, "Collects declared sources from")
+Rel(scanner, ignore, "Excludes paths using")
+Rel(scanner, probe, "Tests each candidate with")
+Rel(scanner, budget, "Bounded by")
+Rel(analyzer, redactor, "Filters retained values through")
+Rel(analyzer, context, "Assembles")
+@enduml

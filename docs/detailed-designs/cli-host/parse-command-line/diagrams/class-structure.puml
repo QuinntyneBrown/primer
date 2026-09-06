@@ -1,0 +1,84 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Parse the command line
+
+interface ICommandModule {
+  +Build(): Command
+}
+
+class RootCommandFactory {
+  -modules: IEnumerable<ICommandModule>
+  +Create(): RootCommand
+}
+
+class GlobalOptions {
+  +{static} Path: Option<DirectoryInfo>
+  +{static} Verbosity: Option<VerbosityLevel>
+  +{static} Format: Option<OutputFormat>
+  +{static} NoColor: Option<bool>
+  +{static} DryRun: Option<bool>
+  +{static} Yes: Option<bool>
+}
+
+class InitCommand {
+  +Build(): Command
+}
+class CheckCommand {
+  +Build(): Command
+}
+class McpCommand {
+  +Build(): Command
+}
+
+class InvocationPipeline {
+  +Invoke(context: InvocationContext): Task<int>
+  -MapException(error: Exception): ExitCode
+}
+
+class ParseErrorHandler {
+  +Render(result: ParseResult): ExitCode
+}
+
+enum ExitCode {
+  Success = 0
+  Unexpected = 1
+  Usage = 2
+  Configuration = 3
+  Verification = 4
+}
+
+enum VerbosityLevel {
+  Quiet
+  Minimal
+  Normal
+  Detailed
+  Diagnostic
+}
+
+enum OutputFormat {
+  Text
+  Json
+}
+
+ICommandModule <|.. InitCommand
+ICommandModule <|.. CheckCommand
+ICommandModule <|.. McpCommand
+RootCommandFactory o-- "*" ICommandModule : composes
+RootCommandFactory ..> GlobalOptions : attaches
+InvocationPipeline ..> ParseErrorHandler : delegates failures to
+InvocationPipeline --> ExitCode : returns
+ParseErrorHandler --> ExitCode : returns
+GlobalOptions --> VerbosityLevel : parses
+GlobalOptions --> OutputFormat : parses
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Check required MCP servers
+
+Container_Boundary(exe, "primer executable") {
+  Component(source, "ConfigurationMcpRequirementSource", "IMcpRequirementSource", "Reads the manifest or the built-in defaults")
+  Component(requirement, "McpRequirement", "Record", "Name, constraint, install method, source, checksum")
+  Component(probes, "IMcpClientProbe set", "Strategy set", "One probe per known agent client")
+  Component(result, "ClientProbeResult", "Record", "Client, configuration presence, registered servers")
+  Component(analyzer, "McpGapAnalyzer", "Comparison", "Compares requirements against probe results")
+  Component(status, "McpServerStatus", "Enumeration", "Installed, Outdated, Missing, or Unknown")
+  Component(report, "McpGapReport", "Record", "Each requirement with status and remediation")
+  Component(builder, "RemediationCommandBuilder", "Renderer", "Renders the exact resolving command")
+  Component(error, "MalformedClientConfigError", "Typed failure", "Carries the unparseable configuration path")
+}
+
+Rel(source, requirement, "Produces")
+Rel(probes, result, "Produces")
+Rel(probes, error, "Raises on an unparseable configuration")
+Rel(analyzer, requirement, "Compares")
+Rel(analyzer, result, "Against")
+Rel(analyzer, status, "Assigns")
+Rel(analyzer, report, "Produces")
+Rel(report, builder, "Names the command from")
+@enduml

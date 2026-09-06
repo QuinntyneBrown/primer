@@ -1,0 +1,58 @@
+@startuml
+title UML sequence behaviour - Install the tool and report its version
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - .NET SDK" #FFF4E5
+  participant "dotnet tool" as sdk
+  database "Tool store" as store
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "Program" as program
+  participant "PrimerHostBuilder" as host
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "VersionHandler" as handler
+  participant "BuildMetadata" as meta
+end box
+
+dev -> shell : dotnet tool install --global Primer
+shell -> sdk : Resolve the package
+sdk -> store : Unpack per L2-001 tool metadata
+store --> sdk : Command shim named primer
+sdk --> shell : Installation result
+shell --> dev : Report installed version
+
+== Later invocation ==
+
+dev -> shell : primer --version
+shell -> program : Start process
+program -> host : Build host with deferred service factories
+host --> program : Configured host
+program -> handler : Dispatch the version request
+handler -> meta : Read L2-002 informational version
+meta --> handler : Version and commit
+note right of handler
+  No repository-facing service is
+  constructed on this path, holding
+  startup inside the L2-054 budget.
+end note
+handler --> program : ExitCode.Success
+program --> shell : Exit code 0 and version on stdout
+shell --> dev : Present the version
+@enduml

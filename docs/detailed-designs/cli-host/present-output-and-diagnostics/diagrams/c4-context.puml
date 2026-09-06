@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Present output and diagnostics
+
+Person(dev, "Developer", "Reads results in a terminal")
+System_Ext(script, "Script or CI job", "Parses stdout and branches on the exit code")
+System(primer, "Primer", "CLI that renders results, logs, and errors")
+System_Ext(terminal, "Terminal", "Supplies width, colour, and encoding capability")
+
+Rel(primer, dev, "Writes results to stdout and diagnostics to stderr")
+Rel(primer, script, "Writes one JSON envelope to stdout", "--format json")
+Rel(terminal, primer, "Reports capability to")
+Rel(dev, terminal, "Reads")
+@enduml

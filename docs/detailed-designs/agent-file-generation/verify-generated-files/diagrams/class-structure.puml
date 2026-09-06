@@ -1,0 +1,65 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Verify generated files
+
+class CheckCommand {
+  +Build(): Command
+}
+
+interface ICheckHandler {
+  +Handle(options: CheckOptions): Task<ExitCode>
+}
+
+class CheckHandler {
+  +Handle(options: CheckOptions): Task<ExitCode>
+}
+
+class DriftChecker {
+  +Compare(expected: IReadOnlyList<GeneratedFile>): DriftReport
+}
+
+class DriftReport {
+  +Entries: IReadOnlyList<DriftEntry>
+  +HasDrift: bool
+}
+
+class DriftEntry {
+  +RelativePath: string
+  +Kind: DriftKind
+}
+
+enum DriftKind {
+  Current
+  Divergent
+  Missing
+}
+
+class CheckResultPresenter {
+  +Present(report: DriftReport, format: OutputFormat): void
+}
+
+enum ExitCode {
+  Success = 0
+  Verification = 4
+}
+
+ICheckHandler <|.. CheckHandler
+CheckCommand ..> ICheckHandler : dispatches to
+CheckHandler --> DriftChecker : compares with
+CheckHandler --> ExitCode : returns
+DriftChecker --> DriftReport : produces
+DriftReport o-- "*" DriftEntry : lists
+DriftEntry --> DriftKind : declares
+CheckResultPresenter ..> DriftReport : renders
+@enduml

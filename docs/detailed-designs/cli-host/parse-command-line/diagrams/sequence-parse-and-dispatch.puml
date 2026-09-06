@@ -1,0 +1,54 @@
+@startuml
+title UML sequence behaviour - Parse and dispatch, or reject
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "Program" as program
+  participant "RootCommandFactory" as factory
+  participant "InvocationPipeline" as pipeline
+  participant "ParseErrorHandler" as parseerr
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "Command handler" as handler
+end box
+
+dev -> shell : primer init --agent claude
+shell -> program : Start process with argv
+program -> factory : Create the root command
+factory -> factory : Attach L2-005 global options to the root
+factory --> program : Root command tree
+program -> pipeline : Invoke with argv
+
+alt Input parses
+  pipeline -> handler : Resolve from the container and invoke
+  handler --> pipeline : ExitCode
+else Token is unrecognised
+  pipeline -> parseerr : Render the L2-006 failure
+  parseerr -> parseerr : Compute the nearest-match suggestion
+  parseerr --> pipeline : ExitCode.Usage
+  note right of parseerr
+    No file is created, modified,
+    or deleted on this path.
+  end note
+end
+
+pipeline --> program : ExitCode per the L2-004 contract
+program --> shell : Process exit code
+shell --> dev : Present output and exit status
+@enduml

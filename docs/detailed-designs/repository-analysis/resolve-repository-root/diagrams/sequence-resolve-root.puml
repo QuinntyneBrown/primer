@@ -1,0 +1,61 @@
+@startuml
+title UML sequence behaviour - Resolve the root and confine a write
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Developer" as dev
+box "Frontend - Terminal session" #E0F2FE
+  participant "Shell" as shell
+end box
+box "Backend - Primer CLI host" #D1FADF
+  participant "Command handler" as handler
+end box
+box "Backend - Primer Application" #ECFDF3
+  participant "GitRepositoryLocator" as locator
+  participant "SafePathResolver" as resolver
+end box
+box "Backend - Infrastructure" #FFF4E5
+  database "Working tree" as tree
+end box
+
+dev -> shell : primer init --path src/Primer/Commands
+shell -> handler : Invoke with the target path
+handler -> locator : Locate the repository root
+
+loop Until a .git entry is found or the filesystem root is reached
+  locator -> tree : Test the ancestor for a L2-007 .git entry
+  tree --> locator : Present as a directory, present as a worktree file, or absent
+end
+
+alt An ancestor holds a .git entry
+  locator --> handler : RepositoryRoot
+else No ancestor qualifies
+  locator --> handler : RepositoryNotFoundError
+  handler --> shell : ExitCode.Configuration
+end
+
+handler -> resolver : Resolve the candidate output path
+resolver -> resolver : Expand relative segments and follow links
+alt The resolved path lies inside the root
+  resolver --> handler : Confined absolute path
+  handler -> tree : Write within the L2-046 boundary
+  tree --> handler : Write result
+else The resolved path escapes the root
+  resolver --> handler : PathEscapesRepositoryError
+  handler --> shell : ExitCode.Configuration, nothing written
+end
+
+handler --> shell : Process exit code
+shell --> dev : Present the outcome
+@enduml

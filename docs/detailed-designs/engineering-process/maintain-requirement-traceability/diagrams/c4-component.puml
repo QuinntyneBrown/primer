@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Maintain requirement traceability
+
+Container_Boundary(traceability, "Traceability check") {
+  Component(catalog, "SpecCatalog", "Parser", "Parses L1.md and L2.md into requirement records")
+  Component(record, "RequirementRecord", "Record", "Identifier, parent, title, criteria")
+  Component(scanner, "TraceCommentScanner", "Parser", "Extracts identifiers from test header comments")
+  Component(tests, "TraceabilityTests", "Assertions", "Asserts both directions and the L1 and L2 relation")
+}
+
+Container_Boundary(suite, "Integration test suite") {
+  Component(temprepo, "TemporaryRepository", "Fixture", "Creates and deletes a per-test git repository")
+  Component(guard, "NoAmbientStateAttribute", "Guard", "Asserts no path outside the fixture was touched")
+}
+
+Rel(catalog, record, "Produces")
+Rel(tests, catalog, "Reads requirements from")
+Rel(tests, scanner, "Reads referenced identifiers from")
+Rel(suite, temprepo, "Isolates each test with")
+Rel(temprepo, guard, "Is asserted by")
+@enduml

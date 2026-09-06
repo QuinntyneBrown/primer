@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Resolve the repository root
+
+Person(dev, "Developer", "Supplies the target path")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Resolves the root and confines candidate writes")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(tree, "Working tree", "File system", "Directories analysis reads")
+  ContainerDb(gitdir, ".git entry", "Directory or worktree file", "Marks where the repository begins")
+}
+
+Rel(dev, exe, "Invokes with a target path")
+Rel(exe, tree, "Walks upward through")
+Rel(exe, gitdir, "Tests each ancestor for")
+Rel(exe, tree, "Confines every write within", "L2-046")
+@enduml

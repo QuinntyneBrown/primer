@@ -1,0 +1,61 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Resolve the repository root
+
+interface IRepositoryLocator {
+  +Locate(target: DirectoryInfo): RepositoryRoot
+}
+
+class GitRepositoryLocator {
+  +Locate(target: DirectoryInfo): RepositoryRoot
+  -HasGitEntry(candidate: DirectoryInfo): bool
+}
+
+class RepositoryRoot {
+  +Path: string
+  +GitEntryKind: GitEntryKind
+}
+
+enum GitEntryKind {
+  Directory
+  WorktreeFile
+}
+
+interface ISafePathResolver {
+  +Resolve(candidate: string): string
+}
+
+class SafePathResolver {
+  -root: RepositoryRoot
+  +Resolve(candidate: string): string
+  -IsContained(resolved: string): bool
+}
+
+class RepositoryNotFoundError {
+  +TargetPath: string
+}
+
+class PathEscapesRepositoryError {
+  +RejectedPath: string
+  +Root: string
+}
+
+IRepositoryLocator <|.. GitRepositoryLocator
+ISafePathResolver <|.. SafePathResolver
+GitRepositoryLocator --> RepositoryRoot : produces
+GitRepositoryLocator ..> RepositoryNotFoundError : raises
+RepositoryRoot --> GitEntryKind : records
+SafePathResolver --> RepositoryRoot : bounded by
+SafePathResolver ..> PathEscapesRepositoryError : raises
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Install missing MCP servers
+
+Container_Boundary(exe, "primer executable") {
+  Component(command, "McpInstallCommand", "ICommandModule", "Defines primer mcp install")
+  Component(installer, "McpInstaller", "IMcpInstaller", "Plans, gates, verifies, and applies")
+  Component(plan, "InstallPlan", "Record set", "The exact changes displayed for consent")
+  Component(gate, "ConsentGate", "IConsentGate", "Resolves --yes, an interactive prompt, or refusal")
+  Component(verifier, "ArtifactVerifier", "IArtifactVerifier", "Enforces HTTPS, pinning, redirects, and checksums")
+  Component(editor, "ClientConfigEditor", "Editor", "Applies the plan, preserving unrelated entries")
+  Component(backup, "BackupWriter", "Guard", "Writes the timestamped backup first")
+  Component(errors, "Supply-chain failures", "Typed failures", "Insecure source, checksum mismatch, refused redirect")
+}
+
+Rel(command, installer, "Dispatches to")
+Rel(installer, plan, "Builds")
+Rel(installer, gate, "Obtains consent through")
+Rel(installer, verifier, "Verifies each artefact with")
+Rel(verifier, errors, "Raises")
+Rel(installer, backup, "Backs up through")
+Rel(installer, editor, "Applies the plan with")
+@enduml

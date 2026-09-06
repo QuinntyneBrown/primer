@@ -1,0 +1,13 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context - Resolve the repository root
+
+Person(dev, "Developer", "Invokes Primer from any directory in the tree")
+System(primer, "Primer", "CLI that resolves the repository root and confines every write to it")
+System_Ext(worktree, "Git working tree", "Source repository, in ordinary or linked-worktree form")
+
+Rel(dev, primer, "Supplies a target path to", "--path or the working directory")
+Rel(primer, worktree, "Walks upward through, seeking a .git entry")
+Rel(primer, dev, "Reports an unresolvable root to", "stderr, exit 3")
+@enduml

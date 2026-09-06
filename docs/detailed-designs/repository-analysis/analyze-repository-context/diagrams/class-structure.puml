@@ -1,0 +1,139 @@
+@startuml
+' --- shared skin header ---
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+' --------------------------
+title Class structure - Analyse the repository context
+
+interface IRepositoryAnalyzer {
+  +Analyze(root: RepositoryRoot): RepositoryContext
+}
+
+class RepositoryAnalyzer {
+  +Analyze(root: RepositoryRoot): RepositoryContext
+}
+
+class RepositoryContext {
+  +Root: RepositoryRoot
+  +Stacks: IReadOnlyList<StackDescriptor>
+  +Commands: IReadOnlyList<InferredCommand>
+  +Structure: StructureSummary
+  +Conventions: IReadOnlyList<ConventionDescriptor>
+}
+
+interface IStackDetector {
+  +Detect(root: RepositoryRoot): StackDescriptor
+}
+class DotnetStackDetector
+class NodeStackDetector
+
+class StackDescriptor {
+  +Name: string
+  +MarkerFiles: IReadOnlyList<string>
+  +PackageManager: string
+  +TestFramework: string
+}
+
+interface ICommandInferrer {
+  +Order: int
+  +Infer(root: RepositoryRoot): InferredCommand
+}
+class WorkflowCommandInferrer
+class SolutionCommandInferrer
+class PackageScriptInferrer
+
+class InferredCommand {
+  +Role: CommandRole
+  +Invocation: string
+  +ReferencedPaths: IReadOnlyList<string>
+}
+
+enum CommandRole {
+  Build
+  Test
+  Lint
+}
+
+interface IStructureScanner {
+  +Scan(root: RepositoryRoot, budget: AnalysisBudget): StructureSummary
+}
+class BoundedStructureScanner {
+  -visited: HashSet<string>
+  +Scan(root: RepositoryRoot, budget: AnalysisBudget): StructureSummary
+}
+
+class StructureSummary {
+  +Directories: IReadOnlyList<string>
+  +TruncatedAtCap: bool
+}
+
+interface IIgnoreMatcher {
+  +IsIgnored(relativePath: string): bool
+}
+class GitIgnoreMatcher
+
+class FileProbe {
+  +Probe(path: string): FileFacts
+}
+class FileFacts {
+  +SizeBytes: long
+  +IsBinary: bool
+  +IsReadable: bool
+}
+
+interface ISecretRedactor {
+  +Redact(value: string): string
+}
+class PatternSecretRedactor
+
+interface IConventionDetector {
+  +Detect(root: RepositoryRoot): IReadOnlyList<ConventionDescriptor>
+}
+class ConventionDetector
+class ConventionDescriptor {
+  +Kind: string
+  +RelativePath: string
+}
+
+class AnalysisBudget {
+  +MaxDepth: int
+  +MaxFileCount: int
+  +MaxFileBytes: long
+}
+
+IRepositoryAnalyzer <|.. RepositoryAnalyzer
+IStackDetector <|.. DotnetStackDetector
+IStackDetector <|.. NodeStackDetector
+ICommandInferrer <|.. WorkflowCommandInferrer
+ICommandInferrer <|.. SolutionCommandInferrer
+ICommandInferrer <|.. PackageScriptInferrer
+IStructureScanner <|.. BoundedStructureScanner
+IIgnoreMatcher <|.. GitIgnoreMatcher
+ISecretRedactor <|.. PatternSecretRedactor
+IConventionDetector <|.. ConventionDetector
+
+RepositoryAnalyzer o-- "*" IStackDetector : collects from
+RepositoryAnalyzer o-- "*" ICommandInferrer : collects from
+RepositoryAnalyzer --> IStructureScanner : collects from
+RepositoryAnalyzer --> IConventionDetector : collects from
+RepositoryAnalyzer ..> ISecretRedactor : filters through
+RepositoryAnalyzer --> RepositoryContext : assembles
+IStackDetector --> StackDescriptor : reports
+ICommandInferrer --> InferredCommand : reports
+InferredCommand --> CommandRole : has
+IStructureScanner --> StructureSummary : reports
+BoundedStructureScanner --> IIgnoreMatcher : excludes using
+BoundedStructureScanner ..> FileProbe : tests with
+BoundedStructureScanner --> AnalysisBudget : bounded by
+FileProbe --> FileFacts : returns
+IConventionDetector --> ConventionDescriptor : reports
+RepositoryContext *-- StructureSummary : owns
+@enduml

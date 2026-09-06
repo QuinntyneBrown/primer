@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Verify generated files
+
+Person(dev, "Developer", "Runs the check locally")
+System_Ext(ci, "Continuous integration", "Runs the check in the pipeline")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Regenerates in memory and compares")
+}
+
+System_Boundary(repo, "Source repository") {
+  ContainerDb(facts, "Repository facts", "Working tree", "Markers, conventions, and workflows")
+  ContainerDb(committed, "Committed generated files", "AGENTS.md and pointer files", "Compared, never written")
+}
+
+Rel(dev, exe, "Invokes")
+Rel(ci, exe, "Invokes")
+Rel(exe, facts, "Derives current output from")
+Rel(exe, committed, "Compares against", "read only")
+@enduml

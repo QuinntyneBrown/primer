@@ -1,0 +1,22 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Verify generated files
+
+Container_Boundary(exe, "primer executable") {
+  Component(command, "CheckCommand", "ICommandModule", "Defines primer check")
+  Component(handler, "CheckHandler", "ICheckHandler", "Runs analysis and generation, then compares")
+  Component(analyzer, "RepositoryAnalyzer", "Reused service", "Derives the current repository context")
+  Component(generator, "AgentsFileGenerator", "Reused service", "Produces the current expected content")
+  Component(checker, "DriftChecker", "Comparison", "Compares expected content against disk")
+  Component(report, "DriftReport", "Record", "Each target with its drift kind")
+  Component(presenter, "CheckResultPresenter", "Renderer", "Renders text or the JSON envelope")
+}
+
+Rel(command, handler, "Dispatches to")
+Rel(handler, analyzer, "Derives context with")
+Rel(handler, generator, "Produces expected content with")
+Rel(handler, checker, "Compares with")
+Rel(checker, report, "Produces")
+Rel(presenter, report, "Renders")
+@enduml

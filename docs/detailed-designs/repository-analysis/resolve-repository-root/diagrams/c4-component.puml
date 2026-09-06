@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components - Resolve the repository root
+
+Container_Boundary(exe, "primer executable") {
+  Component(locator, "GitRepositoryLocator", "IRepositoryLocator", "Walks upward to the nearest .git entry")
+  Component(root, "RepositoryRoot", "Record", "Absolute resolved path and the .git form found")
+  Component(resolver, "SafePathResolver", "ISafePathResolver", "Asserts a candidate path stays inside the root")
+  Component(notfound, "RepositoryNotFoundError", "Typed failure", "Carries the target path that resolved to nothing")
+  Component(escape, "PathEscapesRepositoryError", "Typed failure", "Carries the rejected path and the root")
+  Component(handler, "Command handler", "Consumer", "Requests a confined path before writing")
+}
+
+Rel(locator, root, "Produces")
+Rel(locator, notfound, "Raises when no ancestor qualifies")
+Rel(resolver, root, "Takes as the boundary")
+Rel(resolver, escape, "Raises on an escaping path")
+Rel(handler, resolver, "Confines every candidate path through")
+@enduml

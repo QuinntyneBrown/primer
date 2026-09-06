@@ -1,0 +1,24 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers - Resolve configuration
+
+Person(dev, "Developer", "Supplies command-line arguments")
+
+System_Boundary(primer, "Primer") {
+  Container(exe, "primer executable", ".NET console application", "Binds and validates options before dispatch")
+}
+
+System_Boundary(sources, "Configuration sources") {
+  ContainerDb(defaults, "Built-in defaults", "Compiled constants", "Lowest precedence")
+  ContainerDb(file, "primer.json", "JSON file in the repository", "Repository-wide settings")
+  ContainerDb(envvars, "PRIMER_ variables", "Process environment", "Per-developer overrides")
+  ContainerDb(templates, "Template overrides", "Files in the repository", "Replace the built-in templates")
+}
+
+Rel(defaults, exe, "Applied first")
+Rel(file, exe, "Overrides the defaults")
+Rel(envvars, exe, "Overrides the file")
+Rel(dev, exe, "Overrides the environment", "argv")
+Rel(templates, exe, "Resolved in place of the built-in template")
+@enduml
