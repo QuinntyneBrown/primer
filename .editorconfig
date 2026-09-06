@@ -37,3 +37,6 @@ dotnet_diagnostic.CA1848.severity = none
 # convention that makes an acceptance criterion legible in a failure report.
 [tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
+
+# Inline arrays are test data, not a hot path worth hoisting to a field.
+dotnet_diagnostic.CA1861.severity = none

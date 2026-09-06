@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.Text.Json;
+using Primer.Shared.Presentation;
 
 namespace Primer.Shared.Hosting;
 
@@ -14,10 +14,7 @@ internal static class PrimerCli
         "Creates contextual agent instruction files for a repository and verifies that the "
         + "required Model Context Protocol components are installed.";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonOutputFormatter JsonFormatter = new();
 
     internal static RootCommand CreateRootCommand()
     {
@@ -73,10 +70,11 @@ internal static class PrimerCli
 
     private static void WriteVersion(InvocationConfiguration configuration, OutputFormat format)
     {
+        // Version reporting answers an option rather than a command, so it is not wrapped
+        // in the result envelope: L2-002 asks for version and commit at the root.
         var text = format is OutputFormat.Json
-            ? JsonSerializer.Serialize(
-                new VersionPayload(BuildMetadata.InformationalVersion, BuildMetadata.CommitSha),
-                JsonOptions)
+            ? JsonFormatter.Render(
+                new VersionPayload(BuildMetadata.InformationalVersion, BuildMetadata.CommitSha))
             : BuildMetadata.InformationalVersion;
 
         configuration.Output.WriteLine(text);
