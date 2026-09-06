@@ -1,0 +1,39 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,md,puml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Namespaces and usings
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+
+# Prefer explicit over implicit where it aids reading
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# Modern C# the codebase leans on
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_prefer_braces = true:warning
+dotnet_style_readonly_field = true:warning
+
+# Analyser noise that fights a CLI tool
+dotnet_diagnostic.CA1303.severity = none
+dotnet_diagnostic.CA1848.severity = none
+
+# Test method names read as sentences: Given_x_When_y_Then_z. Underscores are the
+# convention that makes an acceptance criterion legible in a failure report.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none

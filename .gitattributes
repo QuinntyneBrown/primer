@@ -1,0 +1,6 @@
+# Line endings are declared here rather than left to each machine's git config.
+# L2-026 resolves a generated file's line ending from this file first.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary

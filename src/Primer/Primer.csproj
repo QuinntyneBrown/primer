@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>primer</AssemblyName>
+    <RootNamespace>Primer</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Tool packaging">
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>primer</ToolCommandName>
+    <PackageId>Primer</PackageId>
+    <Version>0.1.0</Version>
+    <Description>Creates contextual agent instruction files for a repository and verifies that the required Model Context Protocol components are installed.</Description>
+    <PackageTags>agents;agents-md;mcp;cli;dotnet-tool</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../AGENTS.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test access">
+    <InternalsVisibleTo Include="Primer.IntegrationTests" />
+    <InternalsVisibleTo Include="Primer.ArchitectureTests" />
+    <InternalsVisibleTo Include="Primer.PerformanceTests" />
+  </ItemGroup>
+
+  <!--
+    Stamps the source revision into the informational version so a build identifies the
+    exact commit it came from. Absent git, the version simply carries no revision suffix.
+  -->
+  <Target Name="ResolvePrimerSourceRevision"
+          BeforeTargets="GetAssemblyVersion"
+          Condition="'$(SourceRevisionId)' == ''">
+    <Exec Command="git rev-parse --short HEAD"
+          ConsoleToMSBuild="true"
+          ContinueOnError="true"
+          IgnoreExitCode="true"
+          StandardOutputImportance="low"
+          StandardErrorImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PrimerGitCommit" />
+      <Output TaskParameter="ExitCode" PropertyName="_PrimerGitExitCode" />
+    </Exec>
+    <PropertyGroup Condition="'$(_PrimerGitExitCode)' == '0' AND '$(_PrimerGitCommit)' != ''">
+      <SourceRevisionId>$(_PrimerGitCommit.Trim())</SourceRevisionId>
+    </PropertyGroup>
+  </Target>
+
+</Project>
