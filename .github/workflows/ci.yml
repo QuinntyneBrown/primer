@@ -33,8 +33,13 @@ jobs:
 
       # The fast tier carries the architecture rules and the traceability gate, so this
       # step is what fails a pull request whose requirements have drifted from its tests.
+      # Run the two projects that hold fast tests by name. Pointing the fast filter at
+      # the whole solution reaches Primer.PerformanceTests, where every test is slow, and
+      # a project that runs zero tests is reported as a failure.
       - name: Test
-        run: dotnet test --solution Primer.slnx -c Release --no-build -- --filter-not-trait "tier=slow"
+        run: |
+          dotnet test --project tests/Primer.IntegrationTests -c Release --no-build -- --filter-not-trait "tier=slow"
+          dotnet test --project tests/Primer.ArchitectureTests -c Release --no-build
 
       - name: Pack
         run: dotnet pack src/Primer/Primer.csproj -c Release --no-build -o ./artifacts
