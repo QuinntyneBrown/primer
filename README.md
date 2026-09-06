@@ -246,6 +246,7 @@ changes your machine. The guarantees are deliberate:
 | [`docs/specs/L2.md`](docs/specs/L2.md) | 62 detailed requirements with acceptance criteria. |
 | [`docs/detailed-designs/`](docs/detailed-designs/) | 14 feature designs with C4, class, and sequence diagrams. |
 | [`AGENTS.md`](AGENTS.md) | How to work in this repository. |
+| [`.claude/skills/agent-instruction-files/`](.claude/skills/agent-instruction-files/) | A Claude Code skill that writes the same greenfield files without the CLI installed. Its templates are exported from the CLI by `eng/scripts/Export-SkillTemplates.ps1`; run that after changing an archetype template, and `-Check` to detect drift. |
 
 Every requirement is covered by a test, and a traceability gate in CI fails the build
 if that stops being true.

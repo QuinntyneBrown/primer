@@ -9,6 +9,7 @@ than remembered.
 | Script | What it does |
 |---|---|
 | [`scripts/Install-Primer.ps1`](scripts/Install-Primer.ps1) | Builds Primer from this working tree when needed and installs it as a .NET global tool. |
+| [`scripts/Export-SkillTemplates.ps1`](scripts/Export-SkillTemplates.ps1) | Re-exports the archetype templates from the CLI into the `agent-instruction-files` skill's bundled assets. |
 
 Scripts target PowerShell 7 and run on Windows, macOS, and Linux.
 
@@ -42,6 +43,34 @@ Two details worth knowing:
 
 Run `Get-Help ./eng/scripts/Install-Primer.ps1 -Full` for the full parameter
 reference.
+
+## Export-SkillTemplates.ps1
+
+The `agent-instruction-files` skill under `.claude/skills/` bundles its own copy of
+the web and CLI guidance, so it can write agent files on a machine that does not
+have the `primer` tool installed. A copy is a second source of truth, and a second
+source of truth drifts.
+
+This script makes the copy regenerable rather than hand-maintained. It reads the raw
+string literals out of `src/Primer/Shared/Generation/Greenfield/ArchetypeTemplates.cs`,
+performs the same substitution the C# compiler performs on the shared blocks, and
+writes the result to `.claude/skills/agent-instruction-files/assets/`.
+
+```powershell
+# Regenerate the skill's assets from the current templates
+./eng/scripts/Export-SkillTemplates.ps1
+
+# Fail if the assets have drifted; this is what CI runs
+./eng/scripts/Export-SkillTemplates.ps1 -Check
+```
+
+Run it after changing any archetype template. Editing an asset by hand is how the
+copy and the original quietly stop agreeing, and the next export overwrites the edit
+anyway.
+
+The `{{ProjectName}}`, `{{NamespacePrefix}}`, and `{{Purpose}}` placeholders survive
+extraction on purpose: they are written with two braces, which a C# raw string literal
+treats as literal text, and the skill's own renderer fills them.
 
 ## Uninstalling
 
