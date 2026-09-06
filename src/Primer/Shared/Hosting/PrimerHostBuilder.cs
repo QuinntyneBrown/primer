@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Primer.Shared.Analysis;
 using Primer.Shared.Presentation;
 
 namespace Primer.Shared.Hosting;
@@ -96,6 +97,23 @@ internal static class PrimerHostBuilder
         services.AddSingleton<ErrorPresenter>();
         services.AddSingleton<ITemplateLocator, TemplateLocator>();
         services.AddSingleton<EffectiveSettingsReporter>();
+
+        services.AddSingleton<IRepositoryLocator, GitRepositoryLocator>();
+        services.AddSingleton<IIgnoreMatcher, GitIgnoreMatcher>();
+        services.AddSingleton<ISecretRedactor, PatternSecretRedactor>();
+        services.AddSingleton<FileProbe>();
+        services.AddSingleton<IStructureScanner, BoundedStructureScanner>();
+        services.AddSingleton<IConventionDetector, ConventionDetector>();
+        services.AddSingleton<IRepositoryAnalyzer, RepositoryAnalyzer>();
+
+        services.AddSingleton<IStackDetector, DotnetStackDetector>();
+        services.AddSingleton<IStackDetector, NodeStackDetector>();
+        services.AddSingleton<IStackDetector, PythonStackDetector>();
+        services.AddSingleton<IStackDetector, GoStackDetector>();
+
+        services.AddSingleton<ICommandInferrer, WorkflowCommandInferrer>();
+        services.AddSingleton<ICommandInferrer, SolutionCommandInferrer>();
+        services.AddSingleton<ICommandInferrer, PackageScriptInferrer>();
 
         services.AddSingleton<IValidateOptions<PrimerOptions>, PrimerOptionsValidator>();
         services.AddOptions<PrimerOptions>()
