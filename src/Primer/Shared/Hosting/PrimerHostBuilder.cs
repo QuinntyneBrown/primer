@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Primer.Shared.Analysis;
 using Primer.Shared.Generation;
 using Primer.Shared.Presentation;
+using Primer.Shared.Verification;
 
 namespace Primer.Shared.Hosting;
 
@@ -134,6 +135,9 @@ internal static class PrimerHostBuilder
         services.AddSingleton<BackupWriter>();
         services.AddSingleton<IFileWriter, AtomicFileWriter>();
         services.AddSingleton<IDryRunReporter, DryRunReporter>();
+
+        services.AddSingleton<DriftChecker>();
+        services.AddSingleton<CheckResultPresenter>();
 
         services.AddSingleton<IValidateOptions<PrimerOptions>, PrimerOptionsValidator>();
         services.AddOptions<PrimerOptions>()
