@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/QuinntyneBrown/primer/discussions
+    about: Ask a question or discuss an idea before opening an issue.
+  - name: Report a security vulnerability
+    url: https://github.com/QuinntyneBrown/primer/security/advisories/new
+    about: Report privately. Please do not open a public issue for a vulnerability.

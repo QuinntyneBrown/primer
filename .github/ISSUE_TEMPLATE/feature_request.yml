@@ -1,0 +1,58 @@
+name: Feature request
+description: Suggest a change to what Primer does.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Primer is specification-driven: every behaviour traces to a requirement in
+        `docs/specs/L2.md`. A good feature request describes the problem clearly
+        enough that a requirement can be written from it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >
+        What are you trying to do that Primer makes hard or impossible? Describe the
+        situation, not the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to happen
+      description: Given that problem, what should Primer do instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: criteria
+    attributes:
+      label: How you would know it works
+      description: >
+        Optional, but valuable. In Given/When/Then form if you can — this becomes the
+        acceptance criteria.
+      placeholder: |
+        Given a repository with two solution files,
+        when primer init runs,
+        then the inferred build command names the one at the root.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you try, or rule out, and why?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions for this idea.
+          required: true

@@ -1,0 +1,15 @@
+# Every change requires review from the maintainer.
+# See https://docs.github.com/articles/about-code-owners
+
+*                       @QuinntyneBrown
+
+# The specifications and designs are the contract the implementation is held to.
+# A change to either is a change to what the tool is required to do.
+/docs/specs/            @QuinntyneBrown
+/docs/detailed-designs/ @QuinntyneBrown
+
+# Build, packaging, and CI configuration.
+/.github/               @QuinntyneBrown
+/Directory.Build.props  @QuinntyneBrown
+/Directory.Packages.props @QuinntyneBrown
+/global.json            @QuinntyneBrown
