@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Primer.Shared.Analysis;
+using Primer.Shared.Generation;
 using Primer.Shared.Presentation;
 
 namespace Primer.Shared.Hosting;
@@ -114,6 +115,25 @@ internal static class PrimerHostBuilder
         services.AddSingleton<ICommandInferrer, WorkflowCommandInferrer>();
         services.AddSingleton<ICommandInferrer, SolutionCommandInferrer>();
         services.AddSingleton<ICommandInferrer, PackageScriptInferrer>();
+
+        services.AddSingleton<ISection, OverviewSection>();
+        services.AddSingleton<ISection, CommandsSection>();
+        services.AddSingleton<ISection, StructureSection>();
+        services.AddSingleton<ISection, TestingSection>();
+        services.AddSingleton<ISection, CodeStyleSection>();
+        services.AddSingleton<ISection, GitWorkflowSection>();
+        services.AddSingleton<ISection, BoundariesSection>();
+
+        services.AddSingleton<SectionComposer>();
+        services.AddSingleton<GroundingValidator>();
+        services.AddSingleton<NestedProjectPlanner>();
+        services.AddSingleton<IAgentsFileGenerator, AgentsFileGenerator>();
+
+        services.AddSingleton<LineEndingPolicy>();
+        services.AddSingleton<OverwritePolicy>();
+        services.AddSingleton<BackupWriter>();
+        services.AddSingleton<IFileWriter, AtomicFileWriter>();
+        services.AddSingleton<IDryRunReporter, DryRunReporter>();
 
         services.AddSingleton<IValidateOptions<PrimerOptions>, PrimerOptionsValidator>();
         services.AddOptions<PrimerOptions>()

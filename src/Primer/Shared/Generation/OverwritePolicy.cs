@@ -34,6 +34,23 @@ internal sealed class OverwritePolicy(RepositoryLocation location)
             return file with { Content = EncodingPolicy.Normalize(file.Content, lineEnding) };
         }
 
+        // A pointer file has no managed region because the whole file is generated, so it
+        // is compared as a whole rather than merged.
+        if (file.IsWhollyGenerated)
+        {
+            var pointer = EncodingPolicy.Normalize(file.Content, lineEnding);
+            var current = File.ReadAllText(absolute);
+
+            if (string.Equals(current, pointer, StringComparison.Ordinal))
+            {
+                return file with { Content = pointer, Action = FileAction.Unchanged, ExistingContent = current };
+            }
+
+            return force
+                ? file with { Content = pointer, Action = FileAction.Update, ExistingContent = current }
+                : throw new UnmanagedFileException(file.RelativePath);
+        }
+
         var existing = File.ReadAllText(absolute);
         var merged = Merge(existing, file, force);
         var normalized = EncodingPolicy.Normalize(merged, lineEnding);

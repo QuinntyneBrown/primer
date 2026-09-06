@@ -21,7 +21,8 @@ internal sealed record GeneratedFile(
     string RelativePath,
     string Content,
     FileAction Action,
-    string? ExistingContent = null);
+    string? ExistingContent = null,
+    bool IsWhollyGenerated = false);
 
 /// <summary>
 /// Every intended change, decided before the first byte is written. A dry run and a real
