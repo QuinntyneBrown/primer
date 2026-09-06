@@ -44,9 +44,13 @@ tool safe to invoke from a script that may pass an unexpected argument.
 - **`ParseErrorHandler`** — renders a parse failure to stderr, including the
   nearest-match suggestion supplied by `System.CommandLine`, and returns
   `ExitCode.Usage`.
-- **`InvocationPipeline`** — middleware chain that resolves the handler from the
-  service container, applies the verbosity and format selections, and maps a
-  thrown exception onto the exit-code contract.
+- **`InvocationPipeline`** — wrapper each command action routes through. It resolves
+  the repository root, builds the host, resolves the handler from the service
+  container, applies the verbosity and format selections, and maps a thrown
+  exception onto the exit-code contract. It is a wrapper rather than middleware
+  because the released `System.CommandLine` removed the middleware pipeline the
+  earlier beta offered; the requirements it serves (`L2-004`, `L2-005`, `L2-006`)
+  are unaffected by that change.
 
 ## Requirements
 

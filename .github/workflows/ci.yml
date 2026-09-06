@@ -1,0 +1,70 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  build:
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Primer.slnx
+
+      # Warnings are errors, so a build failure here is an analyser finding.
+      - name: Build
+        run: dotnet build Primer.slnx -c Release --no-restore
+
+      - name: Verify formatting
+        run: dotnet format Primer.slnx --verify-no-changes --no-restore
+
+      # The fast tier carries the architecture rules and the traceability gate, so this
+      # step is what fails a pull request whose requirements have drifted from its tests.
+      - name: Test
+        run: dotnet test --solution Primer.slnx -c Release --no-build -- --filter-not-trait "tier=slow"
+
+      - name: Pack
+        run: dotnet pack src/Primer/Primer.csproj -c Release --no-build -o ./artifacts
+
+      - name: Retain the packaged tool
+        uses: actions/upload-artifact@v4
+        with:
+          name: primer-nupkg
+          path: ./artifacts/*.nupkg
+
+  slow:
+    name: packaging and performance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build Primer.slnx -c Release
+
+      # Packaging packs and installs the tool; it is slow but not timing-sensitive.
+      - name: Packaging tests
+        run: dotnet test --project tests/Primer.IntegrationTests -c Release --no-build -- --filter-trait "tier=slow"
+
+      # The performance budgets run alone and last. Measuring them alongside the packaging
+      # tests charges their CPU contention to the budget, which makes the result a
+      # statement about the runner rather than about the tool.
+      - name: Performance budgets
+        run: dotnet test --project tests/Primer.PerformanceTests -c Release --no-build
