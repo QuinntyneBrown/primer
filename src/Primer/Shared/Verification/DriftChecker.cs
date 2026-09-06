@@ -83,18 +83,8 @@ internal sealed class DriftChecker(
             return DriftKind.Missing;
         }
 
-        try
-        {
-            // Forcing keeps an unmanaged file a reportable divergence rather than a refusal:
-            // the check never writes, so there is nothing here to protect the file from.
-            var planned = policy.Plan([file], force: true).Entries.Single();
+        var planned = policy.Plan([file]).Entries.Single();
 
-            return planned.Action is FileAction.Unchanged ? DriftKind.Current : DriftKind.Divergent;
-        }
-        catch (PrimerException)
-        {
-            // A file the policy cannot even read as managed has certainly drifted.
-            return DriftKind.Divergent;
-        }
+        return planned.Action is FileAction.Unchanged ? DriftKind.Current : DriftKind.Divergent;
     }
 }

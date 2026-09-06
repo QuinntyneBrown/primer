@@ -6,7 +6,7 @@ internal enum FileAction
     /// <summary>The target does not exist and will be created.</summary>
     Create,
 
-    /// <summary>The target exists and its managed content differs.</summary>
+    /// <summary>The target exists and its content differs.</summary>
     Update,
 
     /// <summary>The target already holds exactly this content.</summary>
@@ -21,8 +21,7 @@ internal sealed record GeneratedFile(
     string RelativePath,
     string Content,
     FileAction Action,
-    string? ExistingContent = null,
-    bool IsWhollyGenerated = false);
+    string? ExistingContent = null);
 
 /// <summary>
 /// Every intended change, decided before the first byte is written. A dry run and a real

@@ -41,8 +41,8 @@ welcome:
   vulnerability.
 - **Prompt injection through generated guidance.** Primer treats repository content as
   data and fences it. Any input that causes repository text to be emitted as an
-  imperative instruction to an agent, or that forges a `primer:begin` / `primer:end`
-  delimiter, is in scope.
+  imperative instruction to an agent, or to escape the fence that labels it as quoted
+  data, is in scope.
 - **Secret disclosure.** Any input that causes a credential to appear in generated
   output, in logs, or in a diagnostic.
 - **Supply chain.** `primer mcp install` resolves pinned versions over HTTPS, verifies

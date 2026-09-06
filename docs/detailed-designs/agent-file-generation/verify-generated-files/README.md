@@ -14,8 +14,8 @@ changes nothing
 
 `primer check` performs the same analysis and generation as `primer init` and
 then compares rather than writes. The comparison is what makes the check
-trustworthy: it does not consult a recorded timestamp or a stored marker that
-could itself be stale, it regenerates and diffs.
+trustworthy: it does not consult a recorded timestamp or any state the last run
+left behind, either of which could itself be stale — it regenerates and diffs.
 
 The command is built for continuous integration. It exits `4` when any file is
 missing or divergent, so a pipeline step fails when a contributor changes the
@@ -71,8 +71,8 @@ lives in one place.
 
 ### Class structure
 
-`DriftChecker` depends on the generator output rather than on stored state, so a
-stale marker cannot produce a false pass.
+`DriftChecker` depends on the generator output rather than on stored state, so
+nothing left behind by an earlier run can produce a false pass.
 
 ![Class diagram for verifying generated files](diagrams/class-structure.png)
 

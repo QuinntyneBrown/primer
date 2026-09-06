@@ -10,8 +10,8 @@ internal interface IGreenfieldGenerator
 }
 
 /// <summary>
-/// Renders the archetype's template and wraps it in a managed region, exactly as analysis
-/// mode does. What it does not do is ground the result against the repository: the folder
+/// Renders the archetype's template, exactly as analysis mode renders its own. What it
+/// does not do is ground the result against the repository: the folder
 /// outline names directories the project is about to create, so checking that they exist
 /// would delete the very thing the reader needs.
 /// </summary>
@@ -34,17 +34,13 @@ internal sealed partial class GreenfieldGenerator(
         ArgumentNullException.ThrowIfNull(prompt);
 
         var template = templates.Locate(ArchetypeTemplates.NameOf(archetype)).Content;
-        var hash = ContentHash.Compute(prompt.Value, archetype);
         var projectName = ProjectName();
 
         var filled = TokenPattern.Replace(
             template, match => Substitute(match, prompt, projectName, NamespacePrefix(projectName)));
         var body = LineBudget.Apply(BlankRuns.Replace(filled, "\n\n").Trim('\n'));
 
-        return new GeneratedFile(
-            AgentsFileGenerator.FileName,
-            ManagedRegion.Wrap(body, BuildMetadata.InformationalVersion, hash),
-            FileAction.Create);
+        return new GeneratedFile(AgentsFileGenerator.FileName, body, FileAction.Create);
     }
 
     /// <summary>

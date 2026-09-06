@@ -70,7 +70,7 @@ interface ITemplateLocator {
 class GeneratedFile {
   +RelativePath: string
   +Content: string
-  +IsWhollyGenerated: bool
+  +Action: FileAction
 }
 
 KeywordPromptClassifier ..|> IPromptClassifier

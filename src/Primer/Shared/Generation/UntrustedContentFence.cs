@@ -28,24 +28,16 @@ internal static class UntrustedContentFence
         var body = new StringBuilder();
         body.AppendLine(label);
         body.AppendLine("```text");
-        body.AppendLine(EscapeDelimiters(text).Trim('\n'));
+        body.AppendLine(text.Trim('\n'));
         body.AppendLine("```");
 
         return body.ToString();
     }
 
     /// <summary>
-    /// Neutralises any sequence that would forge or close a managed region. Without this a
-    /// repository could split the generated block and have the remainder read as its own.
-    /// </summary>
-    internal static string EscapeDelimiters(string text) =>
-        text.Replace(ManagedRegion.Begin, "<!-- primer&#58;begin -->", StringComparison.Ordinal)
-            .Replace(ManagedRegion.End, "<!-- primer&#58;end -->", StringComparison.Ordinal);
-
-    /// <summary>
-    /// Prepares repository-derived text for a code span: delimiters are neutralised and a
-    /// backtick cannot close the span early.
+    /// Prepares repository-derived text for a code span, where a backtick would otherwise
+    /// close the span early and let what follows read as guidance the tool authored.
     /// </summary>
     internal static string EscapeInline(string text) =>
-        EscapeDelimiters(text ?? string.Empty).Replace("`", "'", StringComparison.Ordinal);
+        (text ?? string.Empty).Replace("`", "'", StringComparison.Ordinal);
 }

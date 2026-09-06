@@ -19,6 +19,6 @@ System_Boundary(repo, "Source repository") {
 Rel(dev, exe, "Invokes")
 Rel(exe, context, "Derives facts from")
 Rel(exe, templates, "Renders sections from")
-Rel(exe, agentsmd, "Writes the managed region into")
+Rel(exe, agentsmd, "Writes")
 Rel(agent, agentsmd, "Reads")
 @enduml

@@ -44,7 +44,7 @@ public sealed class PointerFileTests
     {
         using var repository = new TemporaryRepository();
         var location = new RepositoryLocation(repository.Path);
-        var plan = new OverwritePolicy(location).Plan(Generate("claude"), force: false);
+        var plan = new OverwritePolicy(location).Plan(Generate("claude"));
 
         new AtomicFileWriter(location, new LineEndingPolicy(location)).Apply(plan);
 
@@ -165,21 +165,20 @@ public sealed class PointerFileTests
         Assert.True(gemini.Content.Split('\n').Length <= 10);
     }
 
-    // Given an existing pointer file whose content differs from the generated pointer, when
-    // a run is planned without --force, then the file is not modified and the outcome is 3.
+    // Given an existing pointer file a person has edited, when a run is planned,
+    // then it is reported as an update and replaced by the generated pointer.
     [Fact]
-    public void Given_a_differing_pointer_file_When_planned_without_force_Then_it_is_refused()
+    public void Given_a_differing_pointer_file_When_planned_Then_it_is_replaced()
     {
         using var repository = new TemporaryRepository();
-        const string HandWritten = "# My own CLAUDE.md\n";
-        repository.Write("CLAUDE.md", HandWritten);
+        repository.Write("CLAUDE.md", "# My own CLAUDE.md\n");
 
         var policy = new OverwritePolicy(new RepositoryLocation(repository.Path));
 
-        var failure = Assert.Throws<UnmanagedFileException>(() => policy.Plan(Generate("claude"), force: false));
+        var claude = Assert.Single(
+            policy.Plan(Generate("claude")).Entries, entry => entry.RelativePath == "CLAUDE.md");
 
-        Assert.Equal(ExitCode.Configuration, failure.ExitCode);
-        Assert.Equal(HandWritten, repository.Read("CLAUDE.md"));
+        Assert.Equal(FileAction.Update, claude.Action);
     }
 
     // Given an existing pointer file whose content already equals the generated pointer,
@@ -192,9 +191,9 @@ public sealed class PointerFileTests
         var policy = new OverwritePolicy(location);
 
         new AtomicFileWriter(location, new LineEndingPolicy(location))
-            .Apply(policy.Plan(Generate("claude"), force: false));
+            .Apply(policy.Plan(Generate("claude")));
 
-        var plan = policy.Plan(Generate("claude"), force: false);
+        var plan = policy.Plan(Generate("claude"));
 
         Assert.Equal(FileAction.Unchanged, Assert.Single(plan.Entries).Action);
     }

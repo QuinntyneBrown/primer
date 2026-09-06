@@ -225,7 +225,7 @@ internal sealed class BoundariesSection : ISection
         }
 
         body.AppendLine(
-            "- `AGENTS.md` is generated. Regenerate it with `primer init`; edits inside the managed region are replaced.");
+            "- `AGENTS.md` is generated. Regenerate it with `primer init`; edits to it are replaced.");
 
         return body.ToString();
     }

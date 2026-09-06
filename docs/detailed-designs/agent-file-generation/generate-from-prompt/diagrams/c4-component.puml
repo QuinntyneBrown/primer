@@ -10,7 +10,6 @@ Container_Boundary(exe, "primer executable") {
   Component(generator, "GreenfieldGenerator", "IGreenfieldGenerator", "Renders the archetype template into a document")
   Component(locator, "TemplateLocator", "ITemplateLocator", "Prefers a repository override over the built-in template")
   Component(fence, "UntrustedContentFence", "Escaper", "Quotes the description as data")
-  Component(region, "ManagedRegion", "Wrapper", "Records tool version and input hash")
   ComponentDb(target, "Target directory", "Working tree", "Receives AGENTS.md and the pointer files")
 }
 
@@ -19,6 +18,5 @@ Rel(init, classifier, "Selects an archetype through")
 Rel(init, generator, "Requests the document from")
 Rel(generator, locator, "Locates the archetype template through")
 Rel(generator, fence, "Quotes the description through")
-Rel(generator, region, "Wraps the body through")
 Rel(init, target, "Writes the planned files into")
 @enduml

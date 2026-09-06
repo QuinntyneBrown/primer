@@ -3,14 +3,15 @@ using Primer.Shared.Hosting;
 namespace Primer.Shared.Generation;
 
 /// <summary>
-/// Decides what writing each target will do, before anything is written. A file the tool
-/// did not generate is never replaced on the tool's own judgement.
+/// Decides what writing each target will do, before anything is written. Every target is
+/// generated in full, so a run replaces what it finds; a target whose bytes already match
+/// is reported unchanged and left closed, which is what keeps its timestamp still.
 /// </summary>
 internal sealed class OverwritePolicy(RepositoryLocation location)
 {
     private readonly LineEndingPolicy _lineEndings = new(location);
 
-    internal WritePlan Plan(IReadOnlyList<GeneratedFile> generated, bool force)
+    internal WritePlan Plan(IReadOnlyList<GeneratedFile> generated)
     {
         ArgumentNullException.ThrowIfNull(generated);
 
@@ -19,62 +20,31 @@ internal sealed class OverwritePolicy(RepositoryLocation location)
 
         foreach (var file in generated)
         {
-            entries.Add(Decide(file, lineEnding, force));
+            entries.Add(Decide(file, lineEnding));
         }
 
         return new WritePlan(entries);
     }
 
-    private GeneratedFile Decide(GeneratedFile file, string lineEnding, bool force)
+    private GeneratedFile Decide(GeneratedFile file, string lineEnding)
     {
         var absolute = Path.Combine(location.Path, file.RelativePath);
+        var content = EncodingPolicy.Normalize(file.Content, lineEnding);
 
         if (!File.Exists(absolute))
         {
-            return file with { Content = EncodingPolicy.Normalize(file.Content, lineEnding) };
-        }
-
-        // A pointer file has no managed region because the whole file is generated, so it
-        // is compared as a whole rather than merged.
-        if (file.IsWhollyGenerated)
-        {
-            var pointer = EncodingPolicy.Normalize(file.Content, lineEnding);
-            var current = File.ReadAllText(absolute);
-
-            if (string.Equals(current, pointer, StringComparison.Ordinal))
-            {
-                return file with { Content = pointer, Action = FileAction.Unchanged, ExistingContent = current };
-            }
-
-            return force
-                ? file with { Content = pointer, Action = FileAction.Update, ExistingContent = current }
-                : throw new UnmanagedFileException(file.RelativePath);
+            return file with { Content = content };
         }
 
         var existing = File.ReadAllText(absolute);
-        var merged = Merge(existing, file, force);
-        var normalized = EncodingPolicy.Normalize(merged, lineEnding);
 
         return file with
         {
-            Content = normalized,
+            Content = content,
             ExistingContent = existing,
-            Action = string.Equals(existing, normalized, StringComparison.Ordinal)
+            Action = string.Equals(existing, content, StringComparison.Ordinal)
                 ? FileAction.Unchanged
                 : FileAction.Update,
         };
-    }
-
-    private static string Merge(string existing, GeneratedFile file, bool force)
-    {
-        // A malformed region is refused here, so the file is never opened for writing.
-        if (ManagedRegion.TrySplit(existing, file.RelativePath, out var before, out var after))
-        {
-            return before + ManagedRegion.ExtractRegion(file.Content) + after;
-        }
-
-        return force
-            ? file.Content
-            : throw new UnmanagedFileException(file.RelativePath);
     }
 }

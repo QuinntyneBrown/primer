@@ -5,10 +5,10 @@ title System Context - Write files safely
 
 Person(dev, "Developer", "Previews a change, then applies it")
 System(primer, "Primer", "CLI that plans every change before writing any of it")
-System_Ext(repo, "Source repository", "Holds the target files and any human-authored content")
+System_Ext(repo, "Source repository", "Holds the target files the run replaces")
 
 Rel(dev, primer, "Previews with", "--dry-run")
 Rel(primer, dev, "Reports intended content or a unified diff to", "stdout")
 Rel(dev, primer, "Applies by re-running without --dry-run")
-Rel(primer, repo, "Writes atomically into, preserving content outside the managed region")
+Rel(primer, repo, "Writes atomically into, replacing each target in full")
 @enduml

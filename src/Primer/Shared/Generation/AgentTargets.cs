@@ -127,15 +127,14 @@ internal static class PointerFileGenerator
             // An import resolves: an agent reading this file alone obtains the whole of
             // AGENTS.md, with nothing duplicated here to drift out of agreement with it.
             PointerMechanism.Import => new GeneratedFile(
-                target.RelativePath, ImportDirective, FileAction.Create, IsWhollyGenerated: true),
+                target.RelativePath, ImportDirective, FileAction.Create),
 
             _ => new GeneratedFile(
                 target.RelativePath,
                 $"Read [{AgentsFileGenerator.FileName}](./{AgentsFileGenerator.FileName}) at the repository root "
                 + "before working in this repository.\n"
                 + "It is the single source of guidance; this file adds nothing of its own.",
-                FileAction.Create,
-                IsWhollyGenerated: true),
+                FileAction.Create),
         };
     }
 }
